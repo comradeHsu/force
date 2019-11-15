@@ -1,17 +1,24 @@
 package com.force;
 
+import java.io.Serializable;
 import java.util.Arrays;
-import java.util.PriorityQueue;
+import java.util.Comparator;
 
-public class Heap {
+public class Heap<E> implements Cloneable, Serializable {
 
-    transient int[] table;
+    private transient Object[] table;
 
-    transient int size;
+    private transient int size;
+
+    /**
+     * The comparator, or null if priority queue uses elements'
+     * natural ordering.
+     */
+    private final Comparator<? super E> comparator;
     /**
      * 是否是大顶堆
      */
-    transient boolean maxTop = true;
+    private transient boolean maxTop = true;
 
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
     /**
@@ -25,20 +32,39 @@ public class Heap {
         this(DEFAULT_INITIAL_CAPACITY);
     }
 
+    public Heap(boolean maxTop){
+        this(DEFAULT_INITIAL_CAPACITY,null,maxTop);
+    }
+
     public Heap(int initialCapacity){
-        table = new int[initialCapacity];
+        this(initialCapacity,null,true);
+    }
+
+    public Heap(Comparator<? super E> comparator) {
+        this(DEFAULT_INITIAL_CAPACITY, comparator,true);
     }
 
     public Heap(int initialCapacity, boolean maxTop){
-        table = new int[initialCapacity];
-        this.maxTop = maxTop;
+        this(initialCapacity,null,true);
     }
 
-    public Heap(int[] array, boolean maxTop){
+    public Heap(Object[] array, Comparator<? super E> comparator,boolean maxTop){
         this.table = array;
         this.size = array.length;
+        this.comparator = comparator;
         this.maxTop = maxTop;
         heapify();
+    }
+
+    public Heap(int initialCapacity,
+                         Comparator<? super E> comparator,boolean maxTop) {
+        // Note: This restriction of at least one is not actually needed,
+        // but continues for 1.5 compatibility
+        if (initialCapacity < 1)
+            throw new IllegalArgumentException();
+        this.table = new Object[initialCapacity];
+        this.comparator = comparator;
+        this.maxTop = maxTop;
     }
 
     /**
@@ -46,7 +72,7 @@ public class Heap {
      * @param e
      * @return
      */
-    public boolean insert(int e){
+    public boolean insert(E e){
         int i = size;
         if (i >= table.length)
             grow(i + 1);
@@ -62,36 +88,39 @@ public class Heap {
      * 删除堆的顶点并返回
      * @return
      */
-    public int remove(){
+    @SuppressWarnings("unchecked")
+    public E remove(){
         if (size == 0){
             throw new NullPointerException();
         }
-        int result = table[0];
+        E result = (E)table[0];
         --size;
-        int lastElement = table[size];
+        E lastElement = (E)table[size];
         table[0] = lastElement;
-        shiftDownLoop(0,lastElement);
+        shiftDown(0,lastElement);
         table[size] = 0;
         return result;
     }
 
-    public int peek(){
-        return table[0];
+    @SuppressWarnings("unchecked")
+    public E peek(){
+        return (E)table[0];
     }
 
-    public int removeAtIndex(int index){
+    @SuppressWarnings("unchecked")
+    public E removeAtIndex(int index){
         if (index >= size){
             throw new IllegalArgumentException("index too big");
         }
         int s = --size;
-        int result = table[index];
+        E result = (E)table[index];
         if (s == index) // removed last element
             table[index] = 0;
         else {
-            int moved = table[s];
+            E moved = (E)table[s];
             table[s] = 0;
             table[index] = moved;
-            shiftDownLoop(index, moved);
+            shiftDown(index, moved);
             if (table[index] == moved) {
                 shiftUp(index, moved);
             }
@@ -102,9 +131,49 @@ public class Heap {
     /**
      * 堆化
      */
+    @SuppressWarnings("unchecked")
     private void heapify() {
         for (int i = (size >>> 1) - 1; i >= 0; i--)
-            shiftDownLoop(i, table[i]);
+            shiftDown(i, (E)table[i]);
+    }
+
+    /**
+     * Inserts item x at position k, maintaining heap invariant by
+     * promoting x up the tree until it is greater than or equal to
+     * its parent, or is the root.
+     *
+     * To simplify and speed up coercions and comparisons. the
+     * Comparable and Comparator versions are separated into different
+     * methods that are otherwise identical. (Similarly for siftDown.)
+     *
+     * @param k the position to fill
+     * @param x the item to insert
+     */
+    private void shiftUp(int k, E x) {
+        if (comparator != null)
+            shiftUpUsingComparator(k, x);
+        else
+            shiftUpComparable(k, x);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void shiftUpUsingComparator(int index, E e) {
+        while(index > 0){
+            int parentIndex = (index - 1) >>> 1;
+            Object parent = table[parentIndex];
+            if (maxTop){
+                if (comparator.compare(e,(E)parent) <= 0)
+                    break;
+                table[index] = parent;
+                index = parentIndex;
+            } else {
+                if (comparator.compare(e,(E)parent) >= 0)
+                    break;
+                table[index] = parent;
+                index = parentIndex;
+            }
+        }
+        table[index] = e;
     }
 
     /**
@@ -112,17 +181,19 @@ public class Heap {
      * @param index
      * @param e
      */
-    private void shiftUp(int index,int e) {
+    @SuppressWarnings("unchecked")
+    private void shiftUpComparable(int index,E e) {
+        Comparable<? super E> key = (Comparable<? super E>) e;
         while(index > 0){
             int parentIndex = (index - 1) >>> 1;
-            int parent = table[parentIndex];
+            Object parent = table[parentIndex];
             if (maxTop){
-                if (e <= parent)
+                if (key.compareTo((E)parent) <= 0)
                     break;
                 table[index] = parent;
                 index = parentIndex;
             } else {
-                if (e >= parent)
+                if (key.compareTo((E)parent) >= 0)
                     break;
                 table[index] = parent;
                 index = parentIndex;
@@ -135,36 +206,75 @@ public class Heap {
      * @param index
      * @param e
      */
-    @Deprecated
-    private void shiftDown(int index,int e){
-        int child = (index << 1) + 1;
-        if (child >= size){
-            return;
-        }
-        int rightIndex = child+1;
-        if (maxTop) {
-            if (rightIndex < size && table[child] < table[rightIndex] && e < table[rightIndex]){
-                table[index] = table[rightIndex];
-                table[rightIndex] = e;
-                shiftDown(child+1,e);
-                return;
+//    @Deprecated
+//    private void shiftDown(int index,int e){
+//        int child = (index << 1) + 1;
+//        if (child >= size){
+//            return;
+//        }
+//        int rightIndex = child+1;
+//        if (maxTop) {
+//            if (rightIndex < size && table[child] < table[rightIndex] && e < table[rightIndex]){
+//                table[index] = table[rightIndex];
+//                table[rightIndex] = e;
+//                shiftDown(child+1,e);
+//                return;
+//            }
+//            if (e >= table[child]) return;
+//            table[index] = table[child];
+//            table[child] = e;
+//            shiftDown(child,e);
+//        } else {
+//            if (rightIndex < size && table[rightIndex] < table[child] && e > table[child]){
+//                table[index] = table[rightIndex];
+//                table[rightIndex] = e;
+//                shiftDown(child+1,e);
+//                return;
+//            }
+//            if (e <= table[child]) return;
+//            table[index] = table[child];
+//            table[child] = e;
+//            shiftDown(child,e);
+//        }
+//    }
+
+    /**
+     * Inserts item x at position k, maintaining heap invariant by
+     * demoting x down the tree repeatedly until it is less than or
+     * equal to its children or is a leaf.
+     *
+     * @param index the position to fill
+     * @param x the item to insert
+     */
+    private void shiftDown(int index, E x) {
+        if (comparator != null)
+            shiftDownUsingComparator(index, x);
+        else
+            shiftDownComparable(index, x);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void shiftDownUsingComparator(int index, E e) {
+        int half = size >>> 1;
+        while (index < half) {
+            int child = (index << 1) + 1;
+            Object c = (E)table[child];
+            int right = child + 1;
+            if (maxTop){
+                if (right < size && comparator.compare((E)c,(E)table[right]) < 0)
+                    c = table[child = right];
+                if (comparator.compare(e,(E)c) >= 0)
+                    break;
+            } else {
+                if (right < size && comparator.compare((E)c,(E)table[right]) > 0)
+                    c = table[child = right];
+                if (comparator.compare(e,(E)c) <= 0)
+                    break;
             }
-            if (e >= table[child]) return;
-            table[index] = table[child];
-            table[child] = e;
-            shiftDown(child,e);
-        } else {
-            if (rightIndex < size && table[rightIndex] < table[child] && e > table[child]){
-                table[index] = table[rightIndex];
-                table[rightIndex] = e;
-                shiftDown(child+1,e);
-                return;
-            }
-            if (e <= table[child]) return;
-            table[index] = table[child];
-            table[child] = e;
-            shiftDown(child,e);
+            table[index] = c;
+            index = child;
         }
+        table[index] = e;
     }
 
     /**
@@ -172,22 +282,24 @@ public class Heap {
      * @param index
      * @param e
      */
-    private void shiftDownLoop(int index, int e) {
+    @SuppressWarnings("unchecked")
+    private void shiftDownComparable(int index, E e) {
+        Comparable<? super E> key = (Comparable<? super E>)e;
         //half对应的元素总是第一个没有子节点的元素
         int half = size >>> 1;
         while (index < half) {
             int child = (index << 1) + 1;
-            int c = table[child];
+            Object c = (E)table[child];
             int right = child + 1;
             if (maxTop){
-                if (right < size && c < table[right])
+                if (right < size && ((Comparable<? super E>) c).compareTo((E)table[right]) < 0)
                     c = table[child = right];
-                if (e >= c)
+                if (key.compareTo((E)c) >= 0)
                     break;
             } else {
-                if (right < size && c > table[right])
+                if (right < size && ((Comparable<? super E>) c).compareTo((E)table[right]) > 0)
                     c = table[child = right];
-                if (e <= c)
+                if (key.compareTo((E)c) <= 0)
                     break;
             }
             table[index] = c;
@@ -214,6 +326,10 @@ public class Heap {
         return (minCapacity > MAX_ARRAY_SIZE) ?
                 Integer.MAX_VALUE :
                 MAX_ARRAY_SIZE;
+    }
+
+    public int size(){
+        return size;
     }
 }
 
