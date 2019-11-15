@@ -1,4 +1,4 @@
-package com.force;
+package ds.force;
 
 import junit.framework.TestCase;
 import org.junit.Test;
