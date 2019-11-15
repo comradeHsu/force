@@ -22,4 +22,39 @@ public class IntArrayListTest extends TestCase {
         list.remove(2);
         assertEquals(3,list.get(1));
     }
+
+    public void testAddAll(){
+        IntArrayList list = new IntArrayList();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        IntArrayList other = new IntArrayList();
+        other.add(4);
+        other.add(5);
+        other.add(6);
+        list.addAll(other.toArray());
+        assertEquals(4,list.get(3));
+    }
+
+    public void testRemoveAll(){
+        IntArrayList list = new IntArrayList();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.add(4);
+        list.add(5);
+        list.add(6);
+        int[] array = new int[]{2,4,5};
+        list.removeAll(new IntArrayList(array));
+        assertEquals(3,list.get(1));
+    }
+
+    public void testClear(){
+        IntArrayList list = new IntArrayList();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.clear();
+        assertEquals(0,list.size());
+    }
 }
