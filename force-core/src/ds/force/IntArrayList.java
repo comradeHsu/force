@@ -1,10 +1,15 @@
 package ds.force;
 
 import java.io.Serializable;
+import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
-
+/**
+ * A list for storage basic data type by int. But not implementation List<E> {@code List<E>}
+ *
+ * @author comradeHsu
+ */
 public class IntArrayList implements Cloneable, Serializable {
 
     /**
@@ -38,8 +43,10 @@ public class IntArrayList implements Cloneable, Serializable {
      * @serial
      */
     private int size;
-
-    protected int modCount;
+    /**
+     * @see AbstractList##modCount
+     */
+    protected transient int modCount;
 
     /**
      * Constructs an empty list with the specified initial capacity.
@@ -121,22 +128,42 @@ public class IntArrayList implements Cloneable, Serializable {
     }
 
 
-
+    /**
+     * return size of this list
+     * @return size
+     */
     public int size() {
         return size;
     }
 
-
+    /**
+     * Returns <tt>true</tt> if this list contains no elements.
+     *
+     * @return <tt>true</tt> if this list contains no elements
+     */
     public boolean isEmpty() {
         return size == 0;
     }
 
-
+    /**
+     * Returns <tt>true</tt> if this list contains the specified element.
+     * More formally, returns <tt>true</tt> if and only if this list contains
+     * at least one element <tt>e</tt> such that
+     * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
+     *
+     * @param o element whose presence in this list is to be tested
+     * @return <tt>true</tt> if this list contains the specified element
+     */
     public boolean contains(int o) {
         return indexOf(o) >= 0;
     }
 
-
+    /**
+     * Returns an array containing all of the elements in this list
+     * in proper sequence (from first to last element).
+     * @return an array containing all of the elements in this list in
+     *         proper sequence
+     */
     public int[] toArray() {
         return elementData;
     }
@@ -153,7 +180,15 @@ public class IntArrayList implements Cloneable, Serializable {
         return true;
     }
 
-
+    /**
+     * Removes the element at the specified position in this list.
+     * Shifts any subsequent elements to the left (subtracts one from their
+     * indices).
+     *
+     * @param index the index of the element to be removed
+     * @return the element that was removed from the list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
     public int removeAtIndex(int index) {
         rangeCheck(index);
 
@@ -164,7 +199,7 @@ public class IntArrayList implements Cloneable, Serializable {
         if (numMoved > 0)
             System.arraycopy(elementData, index+1, elementData, index,
                     numMoved);
-        elementData[--size] = 0; // clear to let GC do its work
+        elementData[--size] = 0;
 
         return oldValue;
     }
@@ -218,7 +253,15 @@ public class IntArrayList implements Cloneable, Serializable {
         return numNew != 0;
     }
 
-
+    /**
+     * @param index index at which to insert the first element from the
+     *              specified collection
+     * @param c collection containing elements to be added to this list
+     * @return <tt>true</tt> if this list changed as a result of the call
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws NullPointerException if the specified collection is null
+     * @see java.util.ArrayList##addAll(int, int[])
+     */
     public boolean addAll(int index, int[] c) {
         rangeCheckForAdd(index);
 
