@@ -2,6 +2,9 @@ package ds.force;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IntArrayListTest extends TestCase {
 
     public void testAdd(){
@@ -56,5 +59,34 @@ public class IntArrayListTest extends TestCase {
         list.add(3);
         list.clear();
         assertEquals(0,list.size());
+    }
+
+    public void testModifiedException(){
+        IntArrayList list = new IntArrayList();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.add(4);
+        list.add(5);
+        list.add(6);
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == 3){
+                list.remove(3);
+            }
+            System.out.println(list.get(i));
+        }
+        List<Integer> li = new ArrayList<>();
+        li.add(1);
+        li.add(2);
+        li.add(3);
+        li.add(5);
+        li.add(5);
+        li.add(6);
+        for (int i = 0; i < li.size(); i++) {
+            if (li.get(i) == 3){
+                li.remove(li.get(i));
+            }
+            System.out.println(list.get(i));
+        }
     }
 }
