@@ -7,7 +7,11 @@ import java.util.Comparator;
 public class Heap<E> implements Cloneable, Serializable {
 
     private transient Object[] table;
-
+    /**
+     * The size of the Heap (the number of elements it contains).
+     *
+     * @serial
+     */
     private transient int size;
 
     /**
@@ -16,10 +20,13 @@ public class Heap<E> implements Cloneable, Serializable {
      */
     private final Comparator<? super E> comparator;
     /**
-     * 是否是大顶堆
+     * is big top heap? if true this heap is a big top heap
+     * else a small top heap
      */
     private transient boolean isMaxTop = true;
-
+    /**
+     * Default initial capacity.
+     */
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
     /**
      * 分配的数组的最大大小
@@ -27,11 +34,17 @@ public class Heap<E> implements Cloneable, Serializable {
      * 尝试分配较大的数组可能会导致OutOfMemory错误：请求的数组大小超过了虚拟机限制
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-
+    /**
+     * Constructs an empty list with an initial capacity of eleven.
+     */
     public Heap(){
         this(DEFAULT_INITIAL_CAPACITY);
     }
-
+    /**
+     * Constructs an empty big top heap or small top heap.
+     *
+     * @param  maxTop  the type of heap
+     */
     public Heap(boolean maxTop){
         this(DEFAULT_INITIAL_CAPACITY,null,maxTop);
     }
