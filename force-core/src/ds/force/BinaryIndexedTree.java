@@ -62,6 +62,20 @@ public class BinaryIndexedTree {
         }
     }
 
+    private void ensureCapacityInternal(int minCapacity) {
+        if (dataTable == EMPTY_ELEMENTDATA) {
+            minCapacity = Math.max(DEFAULT_CAPACITY, minCapacity);
+        }
+
+        ensureExplicitCapacity(minCapacity);
+    }
+
+    private void ensureExplicitCapacity(int minCapacity) {
+        // overflow-conscious code
+        if (minCapacity - dataTable.length > 0)
+            grow(minCapacity);
+    }
+
     /**
      * Increases the capacity to ensure that it can hold at least the
      * number of elements specified by the minimum capacity argument.
@@ -95,7 +109,8 @@ public class BinaryIndexedTree {
     }
 
     public int get(int index){
-        return 0;
+        rangeCheckForInsert(index);
+        return dataTable[index];
     }
 
     public void set(int index, int value){
@@ -116,16 +131,77 @@ public class BinaryIndexedTree {
         }
     }
 
-    public void insert(int value){
+    public boolean insert(int value){
+        ensureCapacityInternal(size + 1);
+        dataTable[size] = value;
+        int index = size;
+        int newSum = getSum(size) + value;
+        size = size + 1;
+        treeArray[index] = newSum - getSum(size - lowBit(index));
+        return true;
+    }
 
+    /**
+     * Checks if the given index is in range.  If not, throws an appropriate
+     * runtime exception.  This method does *not* check if the index is
+     * negative: It is always used immediately prior to an array access,
+     * which throws an ArrayIndexOutOfBoundsException if index is negative.
+     */
+    private void rangeCheck(int index) {
+        if (index >= size)
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    /**
+     * A version of rangeCheck used by insert and addAll.
+     */
+    private void rangeCheckForInsert(int index) {
+        if (index > size || index < 0)
+            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
+    }
+
+    /**
+     * Constructs an IndexOutOfBoundsException detail message.
+     * Of the many possible refactorings of the error handling code,
+     * this "outlining" performs best with both server and client VMs.
+     */
+    private String outOfBoundsMsg(int index) {
+        return "Index: "+index+", Size: "+size;
     }
 
     public void insert(int index, int value){
-
+        rangeCheckForInsert(index);
+        ensureCapacityInternal(size + 1);
+        System.arraycopy(dataTable, index, dataTable, index + 1,
+                size - index);
+        System.arraycopy(treeArray, index, treeArray, index + 1,
+                size - index);
+        dataTable[index] = value;
+        size++;
+        for (int i = index; i < size; i++){
+            treeArray[i] = 0;
+            int newSum = getSum(i) + dataTable[i];
+            treeArray[i] = newSum - getSum(i - lowBit(i) + 1);
+        }
     }
 
     public int remove(int index){
-        return 0;
+        rangeCheck(index);
+        int oldValue = dataTable[index];
+        int numMoved = size - index - 1;
+        if (numMoved > 0) {
+            System.arraycopy(dataTable, index + 1, dataTable, index,
+                    numMoved);
+        }
+        size--;
+        for (int i = index; i < size; i++){
+            treeArray[i] = 0;
+            int newSum = getSum(i) + dataTable[i];
+            treeArray[i] = newSum - getSum(i - lowBit(i) + 1);
+        }
+        treeArray[size] = 0;
+        dataTable[size] = 0;
+        return oldValue;
     }
 
     public int getSum(int index){
@@ -151,5 +227,9 @@ public class BinaryIndexedTree {
             tail -= lowBit(tail);
         }
         return sum - redundant;
+    }
+
+    public int size(){
+        return size;
     }
 }
