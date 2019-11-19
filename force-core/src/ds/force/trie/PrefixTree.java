@@ -112,6 +112,10 @@ public class PrefixTree implements Trie {
         return true;
     }
 
+    public void clear(){
+        this.root = new TrieNode();
+    }
+
     public TrieNode search(String prefix){
         char[] chars = prefix.toCharArray();
         TrieNode node = this.root;
