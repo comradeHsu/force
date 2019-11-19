@@ -25,22 +25,22 @@ public class PrefixTree implements Trie {
 
     private static class TrieNode {
 
-        private CharObjectMap<TrieNode> childs;
+        private CharObjectMap<TrieNode> childes;
 
         private boolean isEnd;
 
 
         TrieNode() {
-            childs = new CharObjectMap<>();
+            childes = new CharObjectMap<>();
             isEnd = false;
         }
 
         boolean contains(char character){
-            return childs.containsKey(character);
+            return childes.containsKey(character);
         }
 
         TrieNode getTrieNode(char character){
-            return childs.get(character);
+            return childes.get(character);
         }
 
         boolean isEnd(){
@@ -49,7 +49,7 @@ public class PrefixTree implements Trie {
     }
 
     public boolean isEmpty(){
-        return this.root.childs.isEmpty();
+        return this.root.childes.isEmpty();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class PrefixTree implements Trie {
                 node = node.getTrieNode(character);
             } else {
                 TrieNode newNode = new TrieNode();
-                node.childs.put(character,newNode);
+                node.childes.put(character,newNode);
                 node = newNode;
             }
         }
@@ -103,8 +103,8 @@ public class PrefixTree implements Trie {
         int index = chars.length - 1;
         while (!stack.isEmpty()){
             TrieNode parent = stack.pop();
-            parent.childs.remove(chars[index]);
-            if (parent.childs.size() > SINGLE || parent.isEnd()){
+            parent.childes.remove(chars[index]);
+            if (parent.childes.size() > SINGLE || parent.isEnd()){
                 break;
             }
             --index;
