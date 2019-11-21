@@ -1,23 +1,19 @@
 package ds.force.trie;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class SuffixTree implements Trie{
 
-    private transient SuffixNode root;
-
     public SuffixTree(String word){
-        this.root = new SuffixNode();
     }
 
-    private static class SuffixNode {
+    private static class Edge {
 
-        private Map<String,SuffixNode> suffixes;
+        private int from;
 
-        SuffixNode() {
-            this.suffixes = new HashMap<>();
-        }
+        private int to;
+
+    }
+
+    private static class Node {
 
     }
 
@@ -28,13 +24,6 @@ public class SuffixTree implements Trie{
 
     @Override
     public boolean add(String word) {
-        char[] chars = word.toCharArray();
-        int index = 0;
-        for (Map.Entry<String,SuffixNode> entry : root.suffixes.entrySet()) {
-            if (entry.getKey().charAt(0) == chars[index]) {
-
-            }
-        }
         return false;
     }
 
