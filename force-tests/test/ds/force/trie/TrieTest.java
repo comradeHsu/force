@@ -18,5 +18,8 @@ public class TrieTest extends TestCase {
         char p = '2';
         System.out.println(p == s);
         System.out.println((char)65535);
+        byte[] bytes1 = "😄哈哈".getBytes();
+        byte[] bytes2 = "123".getBytes();
+        System.out.println("哈哈".length());
     }
 }

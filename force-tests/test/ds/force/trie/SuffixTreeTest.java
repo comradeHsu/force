@@ -6,6 +6,6 @@ public class SuffixTreeTest extends TestCase {
 
     public void testAdd(){
         SuffixTree tree = new SuffixTree();
-        tree.addd("bananas");
+        tree.addd("abcabxabcd");
     }
 }

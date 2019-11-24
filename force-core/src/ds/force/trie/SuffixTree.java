@@ -9,6 +9,8 @@ public class SuffixTree implements Trie{
 
     private transient Node root;
 
+    private transient char[] chars;
+
     public SuffixTree(String word){
     }
 
@@ -72,10 +74,11 @@ public class SuffixTree implements Trie{
 
     public void addd(String word){
         char[] chars = word.toCharArray();
+        this.chars = chars;
         int remainder = 0;
         ActivePoint activePoint = new ActivePoint(root,null,0);
         Deque<Edge> stack = new ArrayDeque<>();
-        for (int c = 0; c < chars.length; c++) {
+        cs:for (int c = 0; c < chars.length; c++) {
             stack.addAll(root.edges);
             remainder++;
             while(!stack.isEmpty()){
@@ -101,28 +104,41 @@ public class SuffixTree implements Trie{
                     continue;
                 }
                 if (chars[c] == chars[edge.from+activePoint.activeLength]) {
+                    if ((edge.to - edge.from) == activePoint.activeLength) {
+                        activePoint.activeNode = edge.node;
+                        activePoint.activeEdge = null;
+                        activePoint.activeLength = 0;
+                        continue cs;
+                    }
                     activePoint.activeLength++;
-                    remainder++;
-                    continue;
+                    continue cs;
                 }
-                edge.to = edge.from + activePoint.activeLength - 1;
-                edge.node = edge.node == null ? new Node() : edge.node ;
+                Node node = new Node();
                 if (preCreate == null){
-                    preCreate = edge.node;
+                    preCreate = node;
                 } else {
-                    preCreate.link = edge.node;
-                    preCreate = edge.node;
+                    preCreate.link = node;
+                    preCreate = node;
                 }
-                edge.node.addEdge(new Edge(edge.from + activePoint.activeLength,c));
-                edge.node.addEdge(new Edge(c,c));
-                activePoint.activeEdge = getEdge(activePoint.activeNode, chars[edge.from+i]);
+                Edge spiltNode = new Edge(edge.from + activePoint.activeLength,edge.to);
+                spiltNode.node = edge.node;
+                node.addEdge(spiltNode);
+                node.addEdge(new Edge(c,c));
+                edge.node = node;
+                edge.to = edge.from + activePoint.activeLength - 1;
                 activePoint.activeLength--;
+                activePoint.activeEdge = activePoint.activeLength == 0 ? null : getEdge(activePoint.activeNode, chars[edge.from+1]);
+                remainder--;
                 if (activePoint.activeNode != root && activePoint.activeNode.link != null){
                     activePoint.activeNode = activePoint.activeNode.link;
+                    activePoint.activeLength = 1;
+                    activePoint.activeEdge = getEdge(activePoint.activeNode, chars[edge.from]);
                 } else {
                     activePoint.activeNode = root;
+                    activePoint.activeEdge = getEdge(activePoint.activeNode, chars[c-remainder+1]);
+                    activePoint.activeLength = activePoint.activeEdge == null ? activePoint.activeLength : 1;
                 }
-                remainder--;
+
             }
 
         }
@@ -194,7 +210,14 @@ public class SuffixTree implements Trie{
     }
 
     private Edge getEdge(Node node, char c){
-        return null;
+        Edge edge = null;
+        int size = node.edges.size();
+        for (int i = 0; i < size; i++) {
+            Edge ele = node.getEdge(i);
+            if (chars[ele.from] == c)
+                edge = ele;
+        }
+        return edge;
     }
 
     @Override
