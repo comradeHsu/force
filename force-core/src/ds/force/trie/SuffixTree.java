@@ -7,6 +7,13 @@ import java.util.List;
 
 public class SuffixTree implements Trie{
 
+    /**
+     * Default terminator.
+     */
+    private static final char DEFAULT_TERMINATOR = '$';
+
+    private transient char terminator = DEFAULT_TERMINATOR;
+
     private transient Node root;
 
     private transient char[] chars;
@@ -69,11 +76,30 @@ public class SuffixTree implements Trie{
 
     @Override
     public boolean find(String s) {
-        return false;
+        char[] charArray = s.toCharArray();
+        Node node = this.root;
+        for (int i = 0; i < charArray.length; i++){
+            Edge edge = getEdge(node,charArray[i]);
+            if (edge == null) return false;
+            node = edge.node;
+        }
+        return true;
+    }
+
+    public int repeatCount(String word){
+        char[] charArray = word.toCharArray();
+        Node node = this.root;
+        int count = 0;
+        for (int i = 0; i < charArray.length; i++){
+            Edge edge = getEdge(node,charArray[i]);
+            if (edge == null) return count;
+            node = edge.node;
+        }
+        return node.edges.size();
     }
 
     public void addd(String word){
-        char[] chars = word.toCharArray();
+        char[] chars = (word + terminator).toCharArray();
         this.chars = chars;
         int remainder = 0;
         ActivePoint activePoint = new ActivePoint(root,null,0);
@@ -144,69 +170,78 @@ public class SuffixTree implements Trie{
         }
     }
 
+
     @Override
     public boolean add(String word) {
-        char[] chars = word.toCharArray();
-        int edgeSize = this.root.edges.size();
+        char[] chars = (word + terminator).toCharArray();
+        this.chars = chars;
         int remainder = 0;
         ActivePoint activePoint = new ActivePoint(root,null,0);
-        for (int c = 0; c < chars.length; c++) {
-            boolean isExist = false;
+        Deque<Edge> stack = new ArrayDeque<>();
+        cs:for (int c = 0; c < chars.length; c++) {
+            stack.addAll(root.edges);
             remainder++;
-            for (int i = 0; i < edgeSize; i++) {
-                Edge edge = this.root.getEdge(i);
-                if (chars[edge.from] == chars[c]){
-                    activePoint.activeEdge = activePoint.activeEdge == null ? edge : activePoint.activeEdge;
-                    activePoint.activeLength++;
-                    remainder++;
-                    isExist = true;
+            while(!stack.isEmpty()){
+                Edge edge = stack.pop();
+                if (edge.node != null){
+                    stack.addAll(edge.node.edges);
                 } else {
-                    if (edge.node == null) {
-                        edge.to++;
-                    } else {
-                        Edge child = getEdge(edge.node,chars[c]);
-                        if (child != null) {
-                            activePoint.activeNode = edge.node;
-                            activePoint.activeEdge = child;
-                            activePoint.activeLength = 1;
-                        }
-                    }
+                    edge.to++;
                 }
             }
             Node preCreate = null;
-            for (int i = 0; i < remainder;i++) {
+            int rem = remainder;
+            for (int i = 0; i < rem; i++) {
+                if (activePoint.activeEdge == null){
+                    activePoint.activeEdge = getEdge(activePoint.activeNode,chars[c]);
+                }
                 Edge edge = activePoint.activeEdge;
                 if (edge == null){
                     edge = new Edge(c,c);
                     activePoint.activeNode.addEdge(edge);
-                    activePoint.activeLength--;
+                    activePoint.activeLength = activePoint.activeLength == 0 ? 0 : activePoint.activeLength--;
+                    remainder--;
                     continue;
                 }
                 if (chars[c] == chars[edge.from+activePoint.activeLength]) {
+                    if ((edge.to - edge.from) == activePoint.activeLength) {
+                        activePoint.activeNode = edge.node;
+                        activePoint.activeEdge = null;
+                        activePoint.activeLength = 0;
+                        continue cs;
+                    }
                     activePoint.activeLength++;
-                    remainder++;
-                    continue;
+                    continue cs;
                 }
-                edge.to = edge.from + activePoint.activeLength - 1;
-                edge.node = edge.node == null ? new Node() : edge.node ;
+                Node node = new Node();
                 if (preCreate == null){
-                    preCreate = edge.node;
+                    preCreate = node;
                 } else {
-                    preCreate.link = edge.node;
-                    preCreate = edge.node;
+                    preCreate.link = node;
+                    preCreate = node;
                 }
-                edge.node.addEdge(new Edge(edge.from + activePoint.activeLength,c));
-                edge.node.addEdge(new Edge(c,c));
-                activePoint.activeEdge = getEdge(activePoint.activeNode, chars[edge.from+i]);
+                Edge spiltNode = new Edge(edge.from + activePoint.activeLength,edge.to);
+                spiltNode.node = edge.node;
+                node.addEdge(spiltNode);
+                node.addEdge(new Edge(c,c));
+                edge.node = node;
+                edge.to = edge.from + activePoint.activeLength - 1;
                 activePoint.activeLength--;
+                activePoint.activeEdge = activePoint.activeLength == 0 ? null : getEdge(activePoint.activeNode, chars[edge.from+1]);
                 remainder--;
-            }
-            if (!isExist){
-                Edge edge = new Edge(c,c);
-                this.root.edges.add(edge);
+                if (activePoint.activeNode != root && activePoint.activeNode.link != null){
+                    activePoint.activeNode = activePoint.activeNode.link;
+                    activePoint.activeLength = 1;
+                    activePoint.activeEdge = getEdge(activePoint.activeNode, chars[edge.from]);
+                } else {
+                    activePoint.activeNode = root;
+                    activePoint.activeEdge = getEdge(activePoint.activeNode, chars[c-remainder+1]);
+                    activePoint.activeLength = activePoint.activeEdge == null ? activePoint.activeLength : 1;
+                }
+
             }
         }
-        return false;
+        return true;
     }
 
     private Edge getEdge(Node node, char c){
@@ -223,5 +258,13 @@ public class SuffixTree implements Trie{
     @Override
     public boolean remove(String s) {
         return false;
+    }
+
+    public boolean remove(String word, char terminator){
+        char[] chars = (word + terminator).toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+
+        }
+        return true;
     }
 }
