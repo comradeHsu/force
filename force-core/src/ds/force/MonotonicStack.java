@@ -3,6 +3,14 @@ package ds.force;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 
+/**
+ * Monotonic stack is divided into monotonic increasing stack and monotonic decreasing stack.
+ * Monotonic increasing stack is the stack in which the elements keep monotonic increasing.
+ * Similarly monotonic decreasing stack is the stack in which the elements keep monotonic decreasing
+ * @param <E> must be extends Comparable
+ * @author comradeHsu
+ * @see Stack
+ */
 public class MonotonicStack<E extends Comparable> implements Stack<E> {
 
     /**
@@ -31,22 +39,45 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
      */
     transient Object[] elements;
 
+    /**
+     * if <code>true</code>,this stack is a monotonic increasing stack
+     * else a monotonic decreasing stack
+     */
     transient boolean isIncrease;
 
+    /**
+     * The size of the Stack (the number of elements it contains).
+     *
+     * @serial
+     */
     private int size;
 
+    /**
+     * Constructs an empty stack with an initial capacity of ten.
+     */
     public MonotonicStack(){
         this(DEFAULT_CAPACITY,true);
     }
 
+    /**
+     * Constructs an empty stack with an initial capacity .
+     */
     public MonotonicStack(int initCapacity){
         this(initCapacity,true);
     }
 
+    /**
+     * Constructs an empty stack with a initial capacity of ten and isIncrease param.
+     * @see  MonotonicStack#isIncrease
+     */
     public MonotonicStack(boolean isIncrease){
         this(DEFAULT_CAPACITY,isIncrease);
     }
 
+    /**
+     * Constructs an empty stack with a initial capacity and isIncrease param.
+     * @see  MonotonicStack#isIncrease
+     */
     public MonotonicStack(int initCapacity, boolean isIncrease){
         if (initCapacity > 0) {
             this.elements = new Object[initCapacity];
@@ -59,11 +90,21 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
         this.isIncrease = isIncrease;
     }
 
+    /**
+     * return the size of stack
+     *
+     * @return the number of elements in this stack
+     */
     @Override
     public int size() {
         return size;
     }
 
+    /**
+     * Returns <tt>true</tt> if this stack contains no elements.
+     *
+     * @return <tt>true</tt> if this stack contains no elements
+     */
     @Override
     public boolean isEmpty() {
         return size == 0;
@@ -109,6 +150,12 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
                 MAX_ARRAY_SIZE;
     }
 
+    /**
+     * Pushes an item onto the top of this stack.
+     *
+     * @param item the item to be pushed onto this stack.
+     * @return the <code>item</code> argument.
+     */
     @Override
     @SuppressWarnings("unchecked")
     public E push(E item) {
@@ -132,6 +179,13 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
             return peek().compareTo(item) <= 0;
     }
 
+    /**
+     * Removes the object at the top of this stack and returns that
+     * object as the value of this function.
+     *
+     * @return The object at the top of this stack
+     * @throws EmptyStackException if this stack is empty
+     */
     @Override
     @SuppressWarnings("unchecked")
     public E pop() {
@@ -140,6 +194,13 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
         return item;
     }
 
+    /**
+     * Looks at the object at the top of this stack without removing it
+     * from the stack.
+     *
+     * @return the object at the top of this stack
+     * @throws EmptyStackException if this stack is empty
+     */
     @Override
     @SuppressWarnings("unchecked")
     public E peek() {
@@ -148,6 +209,10 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
         return (E) elements[size-1];
     }
 
+    /**
+     * Removes all of the elements from this stack (optional operation).
+     * The stack will be empty after this call returns.
+     */
     @Override
     public void clear() {
         for (int i = 0; i < size; i++)
