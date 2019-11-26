@@ -50,6 +50,20 @@ public class IntArrayListBenchmark {
         }
     }
 
+    @Benchmark
+    public void arraySet() {
+        for (int i = 0; i < n; i++) {
+            array.set(i,i);
+        }
+    }
+
+    @Benchmark
+    public void listSet() {
+        for (int i = 0; i < n; i++) {
+            list.set(i,i);
+        }
+    }
+
     @TearDown(Level.Trial) // 结束方法，在全部Benchmark运行之后进行
     public void arrayRemove() {
         for (int i = 0; i < n; i++) {
