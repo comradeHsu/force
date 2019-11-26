@@ -1,11 +1,28 @@
 package ds.force;
 
+import ds.force.common.IntArrayListBenchmark;
+import ds.force.trie.TrieTest;
 import junit.framework.TestCase;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IntArrayListTest extends TestCase {
+
+    private final static Unsafe UNSAFE;
+    // 只能通过反射获取Unsafe对象的实例
+    static {
+        try {
+            Field getUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            getUnsafe.setAccessible(true);
+            UNSAFE = (Unsafe) getUnsafe.get(null);
+        } catch (Exception e) {
+            throw new Error();
+        }
+    }
 
     public void testAdd(){
         IntArrayList list = new IntArrayList();
@@ -61,7 +78,7 @@ public class IntArrayListTest extends TestCase {
         assertEquals(0,list.size());
     }
 
-    public void testModifiedException(){
+    public void testModifiedException() {
         IntArrayList list = new IntArrayList();
         list.add(1);
         list.add(2);
@@ -70,7 +87,7 @@ public class IntArrayListTest extends TestCase {
         list.add(5);
         list.add(6);
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i) == 3){
+            if (list.get(i) == 3) {
                 list.remove(3);
             }
             System.out.println(list.get(i));
@@ -83,10 +100,26 @@ public class IntArrayListTest extends TestCase {
         li.add(5);
         li.add(6);
         for (int i = 0; i < li.size(); i++) {
-            if (li.get(i) == 3){
+            if (li.get(i) == 3) {
                 li.remove(li.get(i));
             }
             System.out.println(list.get(i));
+        }
+    }
+
+
+    public void testEmptyArray(){
+        Object[] o1 = {};
+        Object[] o2 = {};
+        System.out.println(o1 == o2);
+        IntArrayList arrayList = new IntArrayList(10000);
+        for (int i = 0; i < 10000; i++){
+            arrayList.add(i);
+        }
+        Field[] fields = TrieTest.class.getDeclaredFields();
+        for (Field field : fields) {
+            if (Modifier.isStatic(field.getModifiers())) continue;
+            System.out.println(field.getName() + "---offSet:" + UNSAFE.objectFieldOffset(field));
         }
     }
 }
