@@ -2,6 +2,8 @@ package ds.force;
 
 public interface Stack<E> {
 
+    int size();
+
     boolean isEmpty();
 
     E push(E item);
@@ -10,4 +12,5 @@ public interface Stack<E> {
 
     E peek();
 
+    void clear();
 }

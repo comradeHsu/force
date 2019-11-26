@@ -22,4 +22,10 @@ public class IntArrayListTest extends TestCase {
         list.remove(2);
         assertEquals(3,list.get(1));
     }
+
+    public void testEmptyArray(){
+        Object[] o1 = {};
+        Object[] o2 = {};
+        System.out.println(o1 == o2);
+    }
 }
