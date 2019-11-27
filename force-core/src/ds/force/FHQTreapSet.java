@@ -62,6 +62,34 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         return newNode;
     }
 
+    public Node<E> merge(Node<E> a, Node<E> b){
+        if (a == null || b == null) return a == null ? b : a;
+        if (a.priority < b.priority){
+            a.right = merge(a.right,b);
+            update(a);
+            return a;
+        } else {
+            b.left = merge(a,b.left);
+            update(b);
+            return b;
+        }
+    }
+
+    private Node<E> merge1(Node<E> a, Node<E> b){
+        Node<E> c = a, d = b;
+        Deque<Node<E>> stack = new ArrayDeque<>();
+        while(c != null && d != null){
+            stack.push(c);
+            stack.push(d);
+            if (c.priority < d.priority){
+                c = c.right;
+            } else {
+                d = d.left;
+            }
+        }
+        return null;
+    }
+
     private void update(Node<E> node){
         node.size = sizeOf(node.left) + sizeOf(node.right) + 1;
     }
