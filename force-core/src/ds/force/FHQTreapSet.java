@@ -115,13 +115,21 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         Node<E> child = small == null ? big : small;
         while (!stack.isEmpty()){
             Node<E> node = stack.pop();
-            if (child.priority < node.priority){
+            if (compareTo(child.element,node.element) > 0 && child.priority < node.priority){
+                child.left = node;
+                update(child);
+            } else if ((compareTo(child.element,node.element) < 0 && child.priority < node.priority)){
+                child.right = node;
+                update(child);
+            } else if ((compareTo(child.element,node.element) > 0 && child.priority >= node.priority)){
                 node.right = child;
+                child = node;
+                update(node);
             } else {
                 node.left = child;
+                child = node;
+                update(node);
             }
-            update(node);
-            child = node;
         }
         this.root = child;
         return true;
