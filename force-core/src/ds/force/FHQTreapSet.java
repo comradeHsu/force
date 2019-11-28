@@ -26,7 +26,7 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
     /**
      * The number of entries in the treap
      */
-    private transient int size = 0;
+    private int size = 0;
 
     public FHQTreapSet(){
         comparator = null;
@@ -37,16 +37,47 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
     }
 
     public Node<E> split(E item){
+        return comparator == null ? splitComparable(item) : splitUsingComparator(item);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Node<E> splitComparable(E item){
         Node<E> node = this.root;
         Node<E> newNode = null, splitPoint = null;
         Deque<Node<E>> stack = new ArrayDeque<>();
         while (node != null){
+            stack.push(node);
+            if (((Comparable<? super E>)node.element).compareTo(item) <= 0){
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        while (!stack.isEmpty()){
+            Node<E> current = stack.pop();
+            if (((Comparable<? super E>)current.element).compareTo(item) <= 0){
+                current.right = splitPoint;
+                splitPoint = current;
+            } else {
+                current.left = newNode;
+                newNode = current;
+            }
+            update(current);
+        }
+        return newNode == root ? splitPoint : newNode;
+    }
+
+    private Node<E> splitUsingComparator(E item){
+        Node<E> node = this.root;
+        Node<E> newNode = null, splitPoint = null;
+        Deque<Node<E>> stack = new ArrayDeque<>();
+        while (node != null){
+            stack.push(node);
             if (comparator.compare(node.element,item) <= 0){
                 node = node.right;
             } else {
                 node = node.left;
             }
-            stack.push(node);
         }
         while (!stack.isEmpty()){
             Node<E> current = stack.pop();
@@ -59,7 +90,41 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
             }
             update(current);
         }
-        return newNode;
+        return newNode == root ? splitPoint : newNode;
+    }
+
+    private boolean merge1(Node<E> a, Node<E> b){
+        if (a == null || b == null) return true;
+        Node<E> small, big;
+        if (compareTo(a.element,b.element) <= 0){
+            small = a;big = b;
+        } else{
+            small = b;big = a;
+        }
+        Deque<Node<E>> stack = new ArrayDeque<>();
+        while(small != null && big != null){
+            if (compareTo(small.element,big.element) == 0) return false;
+            if (small.priority < big.priority){
+                stack.push(small);
+                small = small.right;
+            } else {
+                stack.push(big);
+                big = big.left;
+            }
+        }
+        Node<E> child = small == null ? big : small;
+        while (!stack.isEmpty()){
+            Node<E> node = stack.pop();
+            if (child.priority < node.priority){
+                node.right = child;
+            } else {
+                node.left = child;
+            }
+            update(node);
+            child = node;
+        }
+        this.root = child;
+        return true;
     }
 
     public Node<E> merge(Node<E> a, Node<E> b){
@@ -75,19 +140,13 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         }
     }
 
-    private Node<E> merge1(Node<E> a, Node<E> b){
-        Node<E> c = a, d = b;
-        Deque<Node<E>> stack = new ArrayDeque<>();
-        while(c != null && d != null){
-            stack.push(c);
-            stack.push(d);
-            if (c.priority < d.priority){
-                c = c.right;
-            } else {
-                d = d.left;
-            }
+    @SuppressWarnings("unchecked")
+    private int compareTo(E a, E b){
+        if (comparator == null){
+            return ((Comparable<? super E>)a).compareTo(b);
+        } else {
+            return comparator.compare(a,b);
         }
-        return null;
     }
 
     private void update(Node<E> node){
@@ -130,7 +189,7 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
@@ -160,7 +219,22 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
 
     @Override
     public boolean add(E e) {
-        return false;
+        Node<E> t = root;
+        if (t == null){
+            compareTo(e, e); // type (and possibly null) check
+
+            root = new Node<>(e, random.nextInt(1000));
+            size = 1;
+            return true;
+        }
+        Node<E> splittingNode = split(e);
+        Node<E> newNode = new Node<>(e, random.nextInt(1000));
+//        this.root = merge(this.root,newNode);
+//        if (!result) return false;
+//        this.root = merge(this.root,splittingNode);
+        boolean result = merge1(this.root,newNode);
+        result &= merge1(this.root,splittingNode);
+        return result;
     }
 
     @Override
@@ -261,6 +335,11 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         Node(E element,int priority){
             this.element = element;
             this.priority = priority;
+            this.size = 1;
+        }
+
+        public void setElement(E element) {
+            this.element = element;
         }
     }
 }
