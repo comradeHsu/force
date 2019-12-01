@@ -33,25 +33,21 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         this.comparator = comparator;
     }
 
-    public Tuple<Node<E>,Node<E>> splitToLeft(E item){
-        return comparator == null ? splitComparable(item) : splitUsingComparator(item);
+    public Node<E> splitToLeft(E item){
+        return comparator == null ? splitToLeftComparable(item) : splitToLeftUsingComparator(item);
     }
 
     @SuppressWarnings("unchecked")
-    private Tuple<Node<E>,Node<E>> splitComparable(E item){
+    private Node<E> splitToLeftComparable(E item){
         Node<E> node = this.root;
         Node<E> newNode = null, splitPoint = null;
         Deque<Node<E>> stack = new ArrayDeque<>();
-        Tuple<Node<E>,Node<E>> result = new Tuple<>();
         while (node != null){
             stack.push(node);
-            if (((Comparable<? super E>)node.element).compareTo(item) < 0){
+            if (((Comparable<? super E>)node.element).compareTo(item) <= 0){
                 node = node.right;
-            } else if (((Comparable<? super E>)node.element).compareTo(item) > 0){
-                node = node.left;
             } else {
-                result.setOptional(node);
-                node = node.right;
+                node = node.left;
             }
         }
         while (!stack.isEmpty()){
@@ -65,23 +61,19 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
             }
             update(current);
         }
-        return newNode == root ? result.setNecessary(splitPoint) : result.setNecessary(newNode);
+        return newNode == root ? splitPoint : newNode;
     }
 
-    private Tuple<Node<E>,Node<E>> splitUsingComparator(E item){
+    private Node<E> splitToLeftUsingComparator(E item){
         Node<E> node = this.root;
         Node<E> newNode = null, splitPoint = null;
         Deque<Node<E>> stack = new ArrayDeque<>();
-        Tuple<Node<E>,Node<E>> result = new Tuple<>();
         while (node != null){
             stack.push(node);
             if (comparator.compare(node.element,item) < 0){
                 node = node.right;
-            } else if (comparator.compare(node.element,item) > 0) {
-                node = node.left;
             } else {
-                result.setOptional(node);
-                node = node.right;
+                node = node.left;
             }
         }
         while (!stack.isEmpty()){
@@ -95,7 +87,7 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
             }
             update(current);
         }
-        return newNode == root ? result.setNecessary(splitPoint) : result.setNecessary(newNode);
+        return newNode == root ? splitPoint : newNode;
     }
 
     /**
@@ -116,8 +108,6 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
             stack.push(node);
             if (((Comparable<? super E>)node.element).compareTo(item) < 0){
                 node = node.right;
-            } else if (((Comparable<? super E>)node.element).compareTo(item) > 0){
-                node = node.left;
             } else {
                 node = node.left;
             }
@@ -256,6 +246,7 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean contains(Object o) {
         return false;
     }
@@ -280,29 +271,29 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
         Node<E> t = root;
         if (t == null){
             compareTo(e, e); // type (and possibly null) check
-
             root = new Node<>(e, random.nextInt());
             return true;
         }
-        Tuple<Node<E>,Node<E>> splittingResult = splitToLeft(e);
-        if (splittingResult.getOptional() != null){
-            merge(this.root,splittingResult.getNecessary());
-            return false;
+        boolean result = false;
+        Node<E> splittingResult = splitToLeft(e);
+        Node<E> itemNode = splitToRight(e);
+        if (itemNode == null){
+            itemNode = new Node<>(e, random.nextInt());
+            result = true;
         }
-        Node<E> newNode = new Node<>(e, random.nextInt());
-        merge(this.root,newNode);
-        merge(this.root,splittingResult.getNecessary());
-        return true;
+        merge(this.root,itemNode);
+        merge(this.root,splittingResult);
+        return result;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean remove(Object o) {
         E element = (E) o;
-        Node<E> splittingNode = splitToLeft(element).getNecessary();
+        Node<E> splittingNode = splitToLeft(element);
         Node<E> nonIncludeItem = splitToRight(element);
         merge(this.root,splittingNode);
-        return nonIncludeItem == null;
+        return nonIncludeItem != null;
     }
 
     @Override
