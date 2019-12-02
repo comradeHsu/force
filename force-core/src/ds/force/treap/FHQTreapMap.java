@@ -1,15 +1,22 @@
 package ds.force.treap;
 
+import java.util.AbstractCollection;
+import java.util.AbstractSet;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.Spliterator;
+import java.util.TreeMap;
 
 public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
 
@@ -339,9 +346,18 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
         this.root = null;
     }
 
+    /**
+     * Fields initialized to contain an instance of the entry set view
+     * the first time this view is requested.  Views are stateless, so
+     * there's no reason to create more than one.
+     */
+    private transient EntrySet entrySet;
+    private transient KeySet<K> navigableKeySet;
+    private transient NavigableMap<K,V> descendingMap;
+
     @Override
     public Set<K> keySet() {
-        return null;
+        return navigableKeySet();
     }
 
     @Override
@@ -388,6 +404,231 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
             V oldValue = this.value;
             this.value = value;
             return oldValue;
+        }
+    }
+
+    private void deleteEntry(Entry<K,V> entry){
+        remove(entry.getKey());
+    }
+
+    class Values extends AbstractCollection<V> {
+        public Iterator<V> iterator() {
+            return new ValueIterator(getFirstEntry());
+        }
+
+        public int size() {
+            return FHQTreapMap.this.size();
+        }
+
+        public boolean contains(Object o) {
+            return FHQTreapMap.this.containsValue(o);
+        }
+
+        public boolean remove(Object o) {
+            for (Entry<K,V> e = getFirstEntry(); e != null; e = successor(e)) {
+                if (valEquals(e.getValue(), o)) {
+                    deleteEntry(e);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void clear() {
+            FHQTreapMap.this.clear();
+        }
+    }
+
+    class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+        public Iterator<Map.Entry<K,V>> iterator() {
+            return new EntryIterator(getFirstEntry());
+        }
+
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+            Object value = entry.getValue();
+            Entry<K,V> p = getEntry(entry.getKey());
+            return p != null && valEquals(p.getValue(), value);
+        }
+
+        public boolean remove(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+            Object value = entry.getValue();
+            Entry<K,V> p = getEntry(entry.getKey());
+            if (p != null && valEquals(p.getValue(), value)) {
+                deleteEntry(p);
+                return true;
+            }
+            return false;
+        }
+
+        public int size() {
+            return FHQTreapMap.this.size();
+        }
+
+        public void clear() {
+            FHQTreapMap.this.clear();
+        }
+
+    }
+
+    Iterator<K> keyIterator() {
+        return new KeyIterator(getFirstEntry());
+    }
+
+    Iterator<K> descendingKeyIterator() {
+        return new DescendingKeyIterator(getLastEntry());
+    }
+
+    static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
+        private final NavigableMap<E, ?> m;
+        KeySet(NavigableMap<E,?> map) { m = map; }
+
+        public Iterator<E> iterator() {
+            return ((FHQTreapMap<E,?>)m).keyIterator();
+        }
+
+        public Iterator<E> descendingIterator() {
+            return ((FHQTreapMap<E,?>)m).descendingKeyIterator();
+        }
+
+        public int size() { return m.size(); }
+        public boolean isEmpty() { return m.isEmpty(); }
+        public boolean contains(Object o) { return m.containsKey(o); }
+        public void clear() { m.clear(); }
+        public E lower(E e) { return m.lowerKey(e); }
+        public E floor(E e) { return m.floorKey(e); }
+        public E ceiling(E e) { return m.ceilingKey(e); }
+        public E higher(E e) { return m.higherKey(e); }
+        public E first() { return m.firstKey(); }
+        public E last() { return m.lastKey(); }
+        public Comparator<? super E> comparator() { return m.comparator(); }
+        public E pollFirst() {
+            Map.Entry<E,?> e = m.pollFirstEntry();
+            return (e == null) ? null : e.getKey();
+        }
+        public E pollLast() {
+            Map.Entry<E,?> e = m.pollLastEntry();
+            return (e == null) ? null : e.getKey();
+        }
+        public boolean remove(Object o) {
+            int oldSize = size();
+            m.remove(o);
+            return size() != oldSize;
+        }
+        public NavigableSet<E> subSet(E fromElement, boolean fromInclusive,
+                                      E toElement,   boolean toInclusive) {
+            return new KeySet<>(m.subMap(fromElement, fromInclusive,
+                    toElement,   toInclusive));
+        }
+        public NavigableSet<E> headSet(E toElement, boolean inclusive) {
+            return new KeySet<>(m.headMap(toElement, inclusive));
+        }
+        public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
+            return new KeySet<>(m.tailMap(fromElement, inclusive));
+        }
+        public SortedSet<E> subSet(E fromElement, E toElement) {
+            return subSet(fromElement, true, toElement, false);
+        }
+        public SortedSet<E> headSet(E toElement) {
+            return headSet(toElement, false);
+        }
+        public SortedSet<E> tailSet(E fromElement) {
+            return tailSet(fromElement, true);
+        }
+        public NavigableSet<E> descendingSet() {
+            return new KeySet<>(m.descendingMap());
+        }
+    }
+
+    /**
+     * Base class for TreeMap Iterators
+     */
+    abstract class TreapEntryIterator<T> implements Iterator<T> {
+        Entry<K,V> next;
+        Entry<K,V> lastReturned;
+
+        TreapEntryIterator(Entry<K,V> first) {
+            lastReturned = null;
+            next = first;
+        }
+
+        public final boolean hasNext() {
+            return next != null;
+        }
+
+        final Entry<K,V> nextEntry() {
+            Entry<K,V> e = next;
+            if (e == null)
+                throw new NoSuchElementException();
+            next = successor(e);
+            lastReturned = e;
+            return e;
+        }
+
+        final Entry<K,V> prevEntry() {
+            Entry<K,V> e = next;
+            if (e == null)
+                throw new NoSuchElementException();
+            next = predecessor(e);
+            lastReturned = e;
+            return e;
+        }
+
+        public void remove() {
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            // deleted entries are replaced by their successors
+            if (lastReturned.left != null && lastReturned.right != null)
+                next = lastReturned;
+            deleteEntry(lastReturned);
+            lastReturned = null;
+        }
+    }
+
+    final class EntryIterator extends TreapEntryIterator<Map.Entry<K,V>> {
+        EntryIterator(Entry<K,V> first) {
+            super(first);
+        }
+        public Map.Entry<K,V> next() {
+            return nextEntry();
+        }
+    }
+
+    final class ValueIterator extends TreapEntryIterator<V> {
+        ValueIterator(Entry<K,V> first) {
+            super(first);
+        }
+        public V next() {
+            return nextEntry().value;
+        }
+    }
+
+    final class KeyIterator extends TreapEntryIterator<K> {
+        KeyIterator(Entry<K,V> first) {
+            super(first);
+        }
+        public K next() {
+            return nextEntry().key;
+        }
+    }
+
+    final class DescendingKeyIterator extends TreapEntryIterator<K> {
+        DescendingKeyIterator(Entry<K,V> first) {
+            super(first);
+        }
+        public K next() {
+            return prevEntry().key;
+        }
+        public void remove() {
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            deleteEntry(lastReturned);
+            lastReturned = null;
         }
     }
 
@@ -458,7 +699,8 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public NavigableSet<K> navigableKeySet() {
-        return null;
+        KeySet<K> nks = navigableKeySet;
+        return (nks != null) ? nks : (navigableKeySet = new KeySet<>(this));
     }
 
     @Override
