@@ -248,7 +248,47 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean contains(Object o) {
-        return false;
+        return getNode(o) != null;
+    }
+
+    final Node<E> getNode(Object o) {
+        // Offload comparator-based version for sake of performance
+        if (comparator != null)
+            return getNodeUsingComparator(o);
+        if (o == null)
+            throw new NullPointerException();
+        @SuppressWarnings("unchecked")
+        Comparable<? super E> k = (Comparable<? super E>) o;
+        Node<E> p = root;
+        while (p != null) {
+            int cmp = k.compareTo(p.element);
+            if (cmp < 0)
+                p = p.left;
+            else if (cmp > 0)
+                p = p.right;
+            else
+                return p;
+        }
+        return null;
+    }
+
+    final Node<E> getNodeUsingComparator(Object o) {
+        @SuppressWarnings("unchecked")
+        E k = (E) o;
+        Comparator<? super E> cpr = comparator;
+        if (cpr != null) {
+            Node<E> p = root;
+            while (p != null) {
+                int cmp = cpr.compare(k, p.element);
+                if (cmp < 0)
+                    p = p.left;
+                else if (cmp > 0)
+                    p = p.right;
+                else
+                    return p;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -348,7 +388,7 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
 
     @Override
     public Comparator<? super E> comparator() {
-        return null;
+        return comparator;
     }
 
     @Override
@@ -391,5 +431,20 @@ public class FHQTreapSet<E> implements NavigableSet<E> {
             this.priority = priority;
             this.size = 1;
         }
+    }
+
+    public E get(int ranking){
+        Node<E> node = this.root;
+        while (node != null){
+            if (ranking == sizeOf(node.left) + 1) {
+                return node.element;
+            } else if (ranking <= sizeOf(node.left)) {
+                node = node.left;
+            } else {
+                ranking -= sizeOf(node.left) + 1;
+                node = node.right;
+            }
+        }
+        return null;
     }
 }
