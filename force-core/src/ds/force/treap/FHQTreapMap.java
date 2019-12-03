@@ -1,6 +1,7 @@
 package ds.force.treap;
 
 import java.util.AbstractCollection;
+import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -15,10 +16,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.Spliterator;
-import java.util.TreeMap;
 
-public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
+public class FHQTreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V> {
 
     /**
      * The comparator used to maintain order in this tree map, or
@@ -28,16 +27,18 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
      */
     private final Comparator<? super K> comparator;
 
-    transient Random random = new Random();
+    transient Random random;
 
     transient Entry<K,V> root;
 
     public FHQTreapMap() {
         this.comparator = null;
+        this.random = new Random();
     }
 
     public FHQTreapMap(Comparator<? super K> comparator) {
         this.comparator = comparator;
+        this.random = new Random();
     }
 
     @Override
@@ -191,7 +192,10 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
     }
 
     private void merge(Entry<K,V> a, Entry<K,V> b){
-        if (a == null || b == null) return;
+        if (a == null || b == null){
+            this.root = a == null ? b : a;
+            return;
+        }
         Entry<K,V> small, big;
         if (compareTo(a.key,b.key) <= 0){
             small = a;big = b;
@@ -279,8 +283,30 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
+    public void putAll(Map<? extends K, ? extends V> map) {
+        super.putAll(map);
+    }
 
+    public V get(int ranking){
+        Entry<K,V> node = this.root;
+        while (node != null){
+            if (ranking == sizeOf(node.left) + 1) {
+                return node.value;
+            } else if (ranking <= sizeOf(node.left)) {
+                node = node.left;
+            } else {
+                ranking -= sizeOf(node.left) + 1;
+                node = node.right;
+            }
+        }
+        return null;
+    }
+
+    public int getSequence(K key){
+        Entry<K,V> splittingNode = splitToLeft(key);
+        int sequence = sizeOf(this.root);
+        merge(this.root,splittingNode);
+        return sequence;
     }
 
     /**
@@ -360,14 +386,22 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
         return navigableKeySet();
     }
 
+    transient Collection<V> values;
+
     @Override
     public Collection<V> values() {
-        return null;
+        Collection<V> vs = values;
+        if (vs == null) {
+            vs = new Values();
+            values = vs;
+        }
+        return vs;
     }
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return null;
+        EntrySet es = entrySet;
+        return (es != null) ? es : (entrySet = new EntrySet());
     }
 
     private static class Entry<K,V> implements Map.Entry<K,V>{
@@ -634,67 +668,90 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public Entry<K, V> lowerEntry(K key) {
-        return null;
+        return predecessor(key);
     }
 
     @Override
     public K lowerKey(K key) {
-        return null;
+        Entry<K,V> entry = predecessor(key);
+        return entry == null ? null : entry.key;
     }
 
     @Override
     public Entry<K, V> floorEntry(K key) {
-        return null;
+        if (key == null)
+            return null;
+        Entry<K,V> splitting = splitToLeft(key);
+        Entry<K,V> target = getLastEntry();
+        merge(this.root,splitting);
+        return target;
     }
 
     @Override
     public K floorKey(K key) {
-        return null;
+        Entry<K,V> entry = floorEntry(key);
+        return entry == null ? null : entry.key;
     }
 
     @Override
     public Entry<K, V> ceilingEntry(K key) {
-        return null;
+        if (key == null)
+            return null;
+        Entry<K,V> splitting = splitToRight(key);
+        Entry<K,V> target = getFirstEntry(splitting);
+        merge(this.root,splitting);
+        return target;
     }
 
     @Override
     public K ceilingKey(K key) {
-        return null;
+        Entry<K,V> entry = ceilingEntry(key);
+        return entry == null ? null : entry.key;
     }
 
     @Override
     public Entry<K, V> higherEntry(K key) {
-        return null;
+        if (key == null)
+            return null;
+        Entry<K,V> splitting = splitToLeft(key);
+        Entry<K,V> target = getFirstEntry(splitting);
+        merge(this.root,splitting);
+        return target;
     }
 
     @Override
     public K higherKey(K key) {
-        return null;
+        Entry<K,V> entry = higherEntry(key);
+        return entry == null ? null : entry.key;
     }
 
     @Override
     public Entry<K, V> firstEntry() {
-        return null;
+        return getFirstEntry();
     }
 
     @Override
     public Entry<K, V> lastEntry() {
-        return null;
+        return getLastEntry();
     }
 
     @Override
     public Entry<K, V> pollFirstEntry() {
-        return null;
+        Entry<K,V> entry = getFirstEntry();
+        remove(entry.key);
+        return entry;
     }
 
     @Override
     public Entry<K, V> pollLastEntry() {
-        return null;
+        Entry<K,V> entry = getLastEntry();
+        remove(entry.key);
+        return entry;
     }
 
     @Override
     public NavigableMap<K, V> descendingMap() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -705,52 +762,54 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public NavigableSet<K> descendingKeySet() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NavigableMap<K, V> headMap(K toKey, boolean inclusive) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Comparator<? super K> comparator() {
-        return null;
+        return comparator;
     }
 
     @Override
     public SortedMap<K, V> subMap(K fromKey, K toKey) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public SortedMap<K, V> headMap(K toKey) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public SortedMap<K, V> tailMap(K fromKey) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public K firstKey() {
-        return null;
+        Entry<K,V> entry = getFirstEntry();
+        return entry == null ? null : entry.key;
     }
 
     @Override
     public K lastKey() {
-        return null;
+        Entry<K,V> entry = getLastEntry();
+        return entry == null ? null : entry.key;
     }
 
     /**
@@ -774,7 +833,11 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
      * key-sort function).  Returns null if the TreeMap is empty.
      */
     final Entry<K,V> getLastEntry() {
-        Entry<K,V> p = root;
+        return getLastEntry(root);
+    }
+
+    final Entry<K,V> getLastEntry(Entry<K,V> entry) {
+        Entry<K,V> p = entry;
         if (p != null)
             while (p.right != null)
                 p = p.right;
@@ -796,6 +859,16 @@ public class FHQTreapMap<K,V> implements NavigableMap<K,V> {
     /**
      * Returns the predecessor of the specified Entry, or null if no such.
      */
+
+    final Entry<K,V> predecessor(K key) {
+        if (key == null)
+            return null;
+        Entry<K,V> splitting = splitToRight(key);
+        Entry<K,V> target = getLastEntry();
+        merge(this.root,splitting);
+        return target;
+    }
+
     final Entry<K,V> predecessor(Entry<K,V> t) {
         if (t == null)
             return null;
