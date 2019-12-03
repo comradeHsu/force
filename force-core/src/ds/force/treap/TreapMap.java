@@ -1,6 +1,6 @@
 package ds.force.treap;
 
-import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -9,7 +9,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 
-public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V> {
+public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap<K,V> {
 
     /**
      * The comparator used to maintain order in this tree map, or
@@ -45,8 +45,28 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
 
     @Override
     public V get(Object key){
-        Entry<K,V> p = getEntry((K)key);
+        Entry<K,V> p = getEntry(key);
         return (p==null ? null : p.value);
+    }
+
+    @Override
+    protected AbstractEntry<K, V> getFirstEntry() {
+        return null;
+    }
+
+    @Override
+    protected AbstractEntry<K, V> getLastEntry() {
+        return null;
+    }
+
+    @Override
+    protected AbstractEntry<K, V> successor(AbstractEntry<K, V> entry) {
+        return null;
+    }
+
+    @Override
+    protected AbstractEntry<K, V> predecessor(AbstractEntry<K, V> entry) {
+        return null;
     }
 
     /**
@@ -54,7 +74,8 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
      * @param key
      * @return
      */
-    private Entry<K,V> getEntry(K key){
+    @Override
+    protected Entry<K,V> getEntry(Object key){
         if (comparator != null)
             return getEntryUsingComparator(key);
         if (key == null)
@@ -66,9 +87,9 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
         do {
             cmp = k.compareTo(node.key);
             if (cmp > 0){
-                node = node.right;
+                node = (Entry<K, V>) node.right;
             } else if (cmp < 0){
-                node = node.left;
+                node = (Entry<K, V>) node.left;
             } else {
                 return node;
             }
@@ -76,7 +97,7 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
         return null;
     }
 
-    private Entry<K,V> getEntryUsingComparator(K key){
+    private Entry<K,V> getEntryUsingComparator(Object key){
         @SuppressWarnings("unchecked")
         K k = (K) key;
         Comparator<? super K> cpr = comparator;
@@ -85,9 +106,9 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
             while (p != null) {
                 int cmp = cpr.compare(k, p.key);
                 if (cmp < 0)
-                    p = p.left;
+                    p = (Entry<K, V>) p.left;
                 else if (cmp > 0)
-                    p = p.right;
+                    p = (Entry<K, V>) p.right;
                 else
                     return p;
             }
@@ -99,7 +120,7 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
     public V put(K key, V value) {
         Entry<K,V> t = root;
         if (t == null){
-            root = new Entry<K,V>(key,value,random.nextInt());
+            root = new Entry<>(key, value, random.nextInt());
             return null;
         }
         Entry<K,V> parent;
@@ -111,9 +132,9 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
                 parent = t;
                 cmp = cpr.compare(key, t.key);
                 if (cmp < 0)
-                    t = t.left;
+                    t = (Entry<K, V>) t.left;
                 else if (cmp > 0)
-                    t = t.right;
+                    t = (Entry<K, V>) t.right;
                 else
                     return t.setValue(value);
             } while (t != null);
@@ -127,9 +148,9 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
                 parent = t;
                 cmp = k.compareTo(t.key);
                 if (cmp < 0)
-                    t = t.left;
+                    t = (Entry<K, V>) t.left;
                 else if (cmp > 0)
-                    t = t.right;
+                    t = (Entry<K, V>) t.right;
                 else
                     return t.setValue(value);
             } while (t != null);
@@ -145,7 +166,7 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
 
     @Override
     public V remove(Object key) {
-        Entry<K,V> node = getEntry((K)key);
+        Entry<K,V> node = getEntry(key);
         if (node == null){
             return null;
         }
@@ -166,7 +187,7 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
             }
             return node.getValue();
         }
-        Entry<K,V> swap = node.left == null ? node.right : node.left;
+        Entry<K,V> swap = (Entry<K, V>) (node.left == null ? node.right : node.left);
         swap.parent = node.parent;
         if (node == root){
             root = swap;
@@ -195,10 +216,10 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
     /** From CLR */
     private void rotateLeft(Entry<K,V> p) {
         if (p != null) {
-            Entry<K,V> r = p.right;
+            Entry<K,V> r = (Entry<K, V>) p.right;
             p.right = r.left;
             if (r.left != null)
-                r.left.parent = p;
+                ((Entry<K, V>)r.left).parent = p;
             r.parent = p.parent;
             if (p.parent == null)
                 root = r;
@@ -214,9 +235,9 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
     /** From CLR */
     private void rotateRight(Entry<K,V> p) {
         if (p != null) {
-            Entry<K,V> l = p.left;
+            Entry<K,V> l = (Entry<K, V>) p.left;
             p.left = l.right;
-            if (l.right != null) l.right.parent = p;
+            if (l.right != null) ((Entry<K, V>)l.right).parent = p;
             l.parent = p.parent;
             if (p.parent == null)
                 root = l;
@@ -229,8 +250,40 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
     }
 
     @Override
+    public void clear(){
+        this.root = null;
+    }
+
+    /**
+     * Fields initialized to contain an instance of the entry set view
+     * the first time this view is requested.  Views are stateless, so
+     * there's no reason to create more than one.
+     */
+    private transient EntrySet entrySet;
+    private transient KeySet<K> navigableKeySet;
+    private transient NavigableMap<K,V> descendingMap;
+
+    @Override
+    public Set<K> keySet() {
+        return navigableKeySet();
+    }
+
+    transient Collection<V> values;
+
+    @Override
+    public Collection<V> values() {
+        Collection<V> vs = values;
+        if (vs == null) {
+            vs = new Values();
+            values = vs;
+        }
+        return vs;
+    }
+
+    @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return null;
+        EntrySet es = entrySet;
+        return (es != null) ? es : (entrySet = new EntrySet());
     }
 
     @Override
@@ -353,44 +406,17 @@ public class TreapMap<K,V> extends AbstractMap<K,V> implements NavigableMap<K,V>
         return null;
     }
 
-    private static class Entry<K,V> implements Map.Entry<K,V> {
+    private static class Entry<K,V> extends AbstractTreapMap.AbstractEntry<K,V> {
 
-        K key;
-
-        V value;
-
-        int priority;
-
-        Entry<K,V> left,right,parent;
+        Entry<K,V> parent;
 
         Entry(K key, V value, int priority){
-            this.key = key;
-            this.value = value;
-            this.priority = priority;
+            super(key, value, priority);
         }
 
         Entry(K key, V value, int priority,Entry<K,V> parent){
-            this.key = key;
-            this.value = value;
-            this.priority = priority;
+            super(key, value, priority);
             this.parent = parent;
-        }
-
-        @Override
-        public K getKey() {
-            return key;
-        }
-
-        @Override
-        public V getValue() {
-            return value;
-        }
-
-        @Override
-        public V setValue(V value) {
-            V oldValue = this.value;
-            this.value = value;
-            return oldValue;
         }
     }
 }
