@@ -53,4 +53,16 @@ public class HeapTest extends TestCase {
         heap.remove();
         assertEquals(new Integer(30),heap.peek());
     }
+
+    public void testClone(){
+        Integer[] array = new Integer[]{6,26,52,36,89,75};
+        Heap<Integer> init = new Heap<>(array,null,false);
+        Heap<Integer> heap = (Heap<Integer>) init.clone();
+        assertEquals(new Integer(6),heap.peek());
+        assertEquals(6,heap.size());
+        heap.remove();
+        assertEquals(new Integer(26),heap.peek());
+        heap.remove();
+        assertEquals(new Integer(36),heap.peek());
+    }
 }

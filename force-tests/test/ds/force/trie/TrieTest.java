@@ -6,6 +6,8 @@ import java.nio.charset.Charset;
 
 public class TrieTest extends TestCase {
 
+    private int size = Integer.MAX_VALUE;
+
     public void testUtf8(){
         char[] chars = "😄".toCharArray();
         byte[] bytes = "😄".getBytes(Charset.defaultCharset());

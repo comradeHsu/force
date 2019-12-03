@@ -73,6 +73,14 @@ public class IntArrayList implements Cloneable, Serializable {
         this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
     }
 
+    /**
+     * Constructs an empty list with int array.
+     */
+    public IntArrayList(int[] array) {
+        this.elementData = array;
+        this.size = array.length;
+    }
+
     private static int calculateCapacity(int[] elementData, int minCapacity) {
         if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
             return Math.max(DEFAULT_CAPACITY, minCapacity);

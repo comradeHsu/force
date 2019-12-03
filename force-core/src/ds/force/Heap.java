@@ -7,7 +7,11 @@ import java.util.Comparator;
 public class Heap<E> implements Cloneable, Serializable {
 
     private transient Object[] table;
-
+    /**
+     * The size of the Heap (the number of elements it contains).
+     *
+     * @serial
+     */
     private transient int size;
 
     /**
@@ -16,10 +20,13 @@ public class Heap<E> implements Cloneable, Serializable {
      */
     private final Comparator<? super E> comparator;
     /**
-     * 是否是大顶堆
+     * is big top heap? if true this heap is a big top heap
+     * else a small top heap
      */
-    private transient boolean maxTop = true;
-
+    private transient boolean isMaxTop = true;
+    /**
+     * Default initial capacity.
+     */
     private static final int DEFAULT_INITIAL_CAPACITY = 11;
     /**
      * 分配的数组的最大大小
@@ -27,11 +34,17 @@ public class Heap<E> implements Cloneable, Serializable {
      * 尝试分配较大的数组可能会导致OutOfMemory错误：请求的数组大小超过了虚拟机限制
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-
+    /**
+     * Constructs an empty list with an initial capacity of eleven.
+     */
     public Heap(){
         this(DEFAULT_INITIAL_CAPACITY);
     }
-
+    /**
+     * Constructs an empty big top heap or small top heap.
+     *
+     * @param  maxTop  the type of heap
+     */
     public Heap(boolean maxTop){
         this(DEFAULT_INITIAL_CAPACITY,null,maxTop);
     }
@@ -44,27 +57,27 @@ public class Heap<E> implements Cloneable, Serializable {
         this(DEFAULT_INITIAL_CAPACITY, comparator,true);
     }
 
-    public Heap(int initialCapacity, boolean maxTop){
+    public Heap(int initialCapacity, boolean isMaxTop){
         this(initialCapacity,null,true);
     }
 
-    public Heap(Object[] array, Comparator<? super E> comparator,boolean maxTop){
+    public Heap(Object[] array, Comparator<? super E> comparator,boolean isMaxTop){
         this.table = array;
         this.size = array.length;
         this.comparator = comparator;
-        this.maxTop = maxTop;
+        this.isMaxTop = isMaxTop;
         heapify();
     }
 
     public Heap(int initialCapacity,
-                         Comparator<? super E> comparator,boolean maxTop) {
+                         Comparator<? super E> comparator,boolean isMaxTop) {
         // Note: This restriction of at least one is not actually needed,
         // but continues for 1.5 compatibility
         if (initialCapacity < 1)
             throw new IllegalArgumentException();
         this.table = new Object[initialCapacity];
         this.comparator = comparator;
-        this.maxTop = maxTop;
+        this.isMaxTop = isMaxTop;
     }
 
     /**
@@ -161,7 +174,7 @@ public class Heap<E> implements Cloneable, Serializable {
         while(index > 0){
             int parentIndex = (index - 1) >>> 1;
             Object parent = table[parentIndex];
-            if (maxTop){
+            if (isMaxTop){
                 if (comparator.compare(e,(E)parent) <= 0)
                     break;
                 table[index] = parent;
@@ -187,7 +200,7 @@ public class Heap<E> implements Cloneable, Serializable {
         while(index > 0){
             int parentIndex = (index - 1) >>> 1;
             Object parent = table[parentIndex];
-            if (maxTop){
+            if (isMaxTop){
                 if (key.compareTo((E)parent) <= 0)
                     break;
                 table[index] = parent;
@@ -260,7 +273,7 @@ public class Heap<E> implements Cloneable, Serializable {
             int child = (index << 1) + 1;
             Object c = (E)table[child];
             int right = child + 1;
-            if (maxTop){
+            if (isMaxTop){
                 if (right < size && comparator.compare((E)c,(E)table[right]) < 0)
                     c = table[child = right];
                 if (comparator.compare(e,(E)c) >= 0)
@@ -291,7 +304,7 @@ public class Heap<E> implements Cloneable, Serializable {
             int child = (index << 1) + 1;
             Object c = (E)table[child];
             int right = child + 1;
-            if (maxTop){
+            if (isMaxTop){
                 if (right < size && ((Comparable<? super E>) c).compareTo((E)table[right]) < 0)
                     c = table[child = right];
                 if (key.compareTo((E)c) >= 0)
@@ -330,6 +343,23 @@ public class Heap<E> implements Cloneable, Serializable {
 
     public int size(){
         return size;
+    }
+
+    /**
+     * Returns a shallow copy of this <tt>Heap</tt> instance.  (The
+     * elements themselves are not copied.)
+     *
+     * @return a clone of this <tt>Heap</tt> instance
+     */
+    public Object clone() {
+        try {
+            Heap<?> v = (Heap<?>) super.clone();
+            v.table = Arrays.copyOf(table, size);
+            return v;
+        } catch (CloneNotSupportedException e) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError(e);
+        }
     }
 }
 

@@ -3,6 +3,7 @@ package ds.force;
 import junit.framework.TestCase;
 
 import java.math.BigDecimal;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BinaryIndexedTreeTest extends TestCase {
 
