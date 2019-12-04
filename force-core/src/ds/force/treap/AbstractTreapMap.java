@@ -13,9 +13,39 @@ import java.util.SortedSet;
 
 public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements Map<K,V> {
 
-    protected abstract AbstractEntry<K,V> getFirstEntry();
+    /**
+     * Returns the first Entry in the TreeMap (according to the TreeMap's
+     * key-sort function).  Returns null if the TreeMap is empty.
+     */
+    protected final AbstractEntry<K,V> getFirstEntry() {
+        return getFirstEntry(getRoot());
+    }
 
-    protected abstract AbstractEntry<K,V> getLastEntry();
+    protected final AbstractEntry<K,V> getFirstEntry(AbstractEntry<K,V> entry) {
+        AbstractEntry<K,V> p = entry;
+        if (p != null)
+            while (p.left != null)
+                p = p.left;
+        return p;
+    }
+
+    /**
+     * Returns the last Entry in the TreeMap (according to the TreeMap's
+     * key-sort function).  Returns null if the TreeMap is empty.
+     */
+    protected final AbstractEntry<K,V> getLastEntry() {
+        return getLastEntry(getRoot());
+    }
+
+    protected final AbstractEntry<K,V> getLastEntry(AbstractEntry<K,V> entry) {
+        AbstractEntry<K,V> p = entry;
+        if (p != null)
+            while (p.right != null)
+                p = p.right;
+        return p;
+    }
+
+    protected abstract AbstractEntry<K,V> getRoot();
 
     protected abstract AbstractEntry<K,V> successor(AbstractEntry<K,V> entry);
 

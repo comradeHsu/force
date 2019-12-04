@@ -1,6 +1,15 @@
 package ds.force.treap;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedMap;
 
 public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap<K,V> {
 
@@ -541,36 +550,9 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
         return entry == null ? null : entry.key;
     }
 
-    /**
-     * Returns the first Entry in the TreeMap (according to the TreeMap's
-     * key-sort function).  Returns null if the TreeMap is empty.
-     */
-    protected final AbstractEntry<K,V> getFirstEntry() {
-        return getFirstEntry(root);
-    }
-
-    protected final AbstractEntry<K,V> getFirstEntry(Entry<K,V> entry) {
-        AbstractEntry<K,V> p = entry;
-        if (p != null)
-            while (p.left != null)
-                p = p.left;
-        return p;
-    }
-
-    /**
-     * Returns the last Entry in the TreeMap (according to the TreeMap's
-     * key-sort function).  Returns null if the TreeMap is empty.
-     */
-    protected final AbstractEntry<K,V> getLastEntry() {
-        return getLastEntry(root);
-    }
-
-    final AbstractEntry<K,V> getLastEntry(Entry<K,V> entry) {
-        AbstractEntry<K,V> p = entry;
-        if (p != null)
-            while (p.right != null)
-                p = p.right;
-        return p;
+    @Override
+    protected AbstractEntry<K, V> getRoot() {
+        return this.root;
     }
 
     /**

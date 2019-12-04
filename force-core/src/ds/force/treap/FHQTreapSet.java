@@ -1,7 +1,5 @@
 package ds.force.treap;
 
-import ds.force.Tuple;
-
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;

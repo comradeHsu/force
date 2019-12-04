@@ -50,23 +50,52 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     }
 
     @Override
-    protected AbstractEntry<K, V> getFirstEntry() {
-        return null;
-    }
-
-    @Override
-    protected AbstractEntry<K, V> getLastEntry() {
-        return null;
+    protected AbstractEntry<K, V> getRoot() {
+        return this.root;
     }
 
     @Override
     protected AbstractEntry<K, V> successor(AbstractEntry<K, V> entry) {
-        return null;
+        return successor(entry.key);
     }
 
     @Override
     protected AbstractEntry<K, V> predecessor(AbstractEntry<K, V> entry) {
-        return null;
+       return predecessor(entry.key);
+    }
+
+    @SuppressWarnings("unchecked")
+    final AbstractEntry<K,V> successor(K key){
+        AbstractEntry<K,V> entry = this.root;
+        Comparable<? super K> k = (Comparable<? super K>) key;
+        AbstractEntry<K,V> target = null;
+        while (entry != null){
+            if (k.compareTo(entry.key) <= 0){
+                entry = entry.left;
+            } else {
+                if (target == null ||
+                        ((Comparable<? super K>)target.key).compareTo(entry.key) > 0) target = entry;
+                entry = entry.right;
+            }
+        }
+        return target;
+    }
+
+    @SuppressWarnings("unchecked")
+    final AbstractEntry<K,V> predecessor(K key){
+        AbstractEntry<K,V> entry = this.root;
+        Comparable<? super K> k = (Comparable<? super K>) key;
+        AbstractEntry<K,V> target = null;
+        while (entry != null){
+            if (k.compareTo(entry.key) >= 0){
+                entry = entry.right;
+            } else {
+                if (target == null ||
+                        ((Comparable<? super K>)target.key).compareTo(entry.key) < 0) target = entry;
+                entry = entry.left;
+            }
+        }
+        return target;
     }
 
     /**
@@ -287,13 +316,14 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     }
 
     @Override
-    public Entry<K, V> lowerEntry(K key) {
-        return null;
+    public AbstractEntry<K, V> lowerEntry(K key) {
+        return predecessor(key);
     }
 
     @Override
     public K lowerKey(K key) {
-        return null;
+        AbstractEntry<K,V> entry = predecessor(key);
+        return entry == null ? null : entry.key;
     }
 
     @Override
@@ -327,13 +357,13 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     }
 
     @Override
-    public Entry<K, V> firstEntry() {
-        return null;
+    public AbstractEntry<K, V> firstEntry() {
+        return getFirstEntry();
     }
 
     @Override
-    public Entry<K, V> lastEntry() {
-        return null;
+    public AbstractEntry<K, V> lastEntry() {
+        return getLastEntry();
     }
 
     @Override
