@@ -2,158 +2,33 @@ package ds.force.treap;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NavigableSet;
+import java.util.NavigableMap;
 import java.util.SortedSet;
 
-public class TreapSet<E> implements NavigableSet<E> {
-    @Override
-    public E lower(E e) {
-        return null;
+public class TreapSet<E> extends AbstractTreapSet<E> {
+
+    /**
+     * Constructs a set backed by the specified navigable map.
+     */
+    TreapSet(NavigableMap<E,Object> m) {
+        this.m = m;
     }
 
-    @Override
-    public E floor(E e) {
-        return null;
+    public TreapSet() {
+        this(new TreapMap<>());
     }
 
-    @Override
-    public E ceiling(E e) {
-        return null;
+    public TreapSet(Comparator<? super E> comparator) {
+        this(new TreapMap<>(comparator));
     }
 
-    @Override
-    public E higher(E e) {
-        return null;
+    public TreapSet(Collection<? extends E> c) {
+        this();
+        addAll(c);
     }
 
-    @Override
-    public E pollFirst() {
-        return null;
-    }
-
-    @Override
-    public E pollLast() {
-        return null;
-    }
-
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return false;
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return null;
-    }
-
-    @Override
-    public Object[] toArray() {
-        return new Object[0];
-    }
-
-    @Override
-    public <T> T[] toArray(T[] a) {
-        return null;
-    }
-
-    @Override
-    public boolean add(E e) {
-        return false;
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        return false;
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends E> c) {
-        return false;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public void clear() {
-
-    }
-
-    @Override
-    public NavigableSet<E> descendingSet() {
-        return null;
-    }
-
-    @Override
-    public Iterator<E> descendingIterator() {
-        return null;
-    }
-
-    @Override
-    public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
-        return null;
-    }
-
-    @Override
-    public NavigableSet<E> headSet(E toElement, boolean inclusive) {
-        return null;
-    }
-
-    @Override
-    public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
-        return null;
-    }
-
-    @Override
-    public Comparator<? super E> comparator() {
-        return null;
-    }
-
-    @Override
-    public SortedSet<E> subSet(E fromElement, E toElement) {
-        return null;
-    }
-
-    @Override
-    public SortedSet<E> headSet(E toElement) {
-        return null;
-    }
-
-    @Override
-    public SortedSet<E> tailSet(E fromElement) {
-        return null;
-    }
-
-    @Override
-    public E first() {
-        return null;
-    }
-
-    @Override
-    public E last() {
-        return null;
+    public TreapSet(SortedSet<E> s) {
+        this(s.comparator());
+        addAll(s);
     }
 }
