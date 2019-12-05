@@ -8,6 +8,7 @@ import java.util.NavigableSet;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.function.BiPredicate;
 
 public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap<K,V> {
 
@@ -66,11 +67,22 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
 
     @SuppressWarnings("unchecked")
     final AbstractEntry<K,V> successor(K key){
+        if (comparator != null) return successor(key, (k, k2) -> comparator.compare((K)k,k2) <= 0);
+        return successor(key,(k, k2) -> ((Comparable<? super K>)k).compareTo(k2) <= 0);
+    }
+
+    private AbstractEntry<K,V> successorUsingPredicate(K key,BiPredicate<Object,K> predicate){
+        if (comparator != null) return successor(key, predicate);
+        return successor(key,predicate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private AbstractEntry<K,V> successor(K key, BiPredicate<Object,K> predicate){
         AbstractEntry<K,V> entry = this.root;
         Comparable<? super K> k = (Comparable<? super K>) key;
         AbstractEntry<K,V> target = null;
         while (entry != null){
-            if (k.compareTo(entry.key) <= 0){
+            if (predicate.test(k, entry.key)){
                 entry = entry.left;
             } else {
                 if (target == null ||
@@ -83,11 +95,21 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
 
     @SuppressWarnings("unchecked")
     final AbstractEntry<K,V> predecessor(K key){
+        if (comparator != null) return predecessor(key, (k, k2) -> comparator.compare((K)k,k2) >= 0);
+        return predecessor(key,(k, k2) -> ((Comparable<? super K>)k).compareTo(k2) >= 0);
+    }
+
+    private AbstractEntry<K,V> predecessorUsingPredicate(K key,BiPredicate<Object,K> predicate){
+        if (comparator != null) return predecessor(key, predicate);
+        return predecessor(key,predicate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private AbstractEntry<K,V> predecessor(K key,BiPredicate<Object,K> predicate){
         AbstractEntry<K,V> entry = this.root;
-        Comparable<? super K> k = (Comparable<? super K>) key;
         AbstractEntry<K,V> target = null;
         while (entry != null){
-            if (k.compareTo(entry.key) >= 0){
+            if (predicate.test(key,entry.key)){
                 entry = entry.right;
             } else {
                 if (target == null ||
