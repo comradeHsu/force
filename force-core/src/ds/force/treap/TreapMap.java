@@ -323,6 +323,10 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
         }
     }
 
+    public TreapMap<K,V> split(K key){
+        return null;
+    }
+
     @Override
     public void clear(){
         this.root = null;

@@ -1,10 +1,12 @@
 package ds.force;
 
+import ds.force.primitive.IntArrayList;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
+public class HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     private static final IntArrayList primes = IntArrayList.of(7,11,13,17,19,23,29,31,37,41);
 
@@ -31,6 +33,17 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public boolean containsKey(Object key) {
+        @SuppressWarnings("unchecked")
+        K k = (K) key;
+        Entry<K,V> entry = this.root;
+        int index = 0;
+        while (entry != null && entry.slots != null){
+            int remainder = remainder(k,primes.get(index));
+            Entry<K,V> node = entry.slots[remainder];
+            if ((node.key == key || key.equals(node.key)) && !node.deleted) return false;
+            entry = node;
+            index++;
+        }
         return false;
     }
 
@@ -53,7 +66,15 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public V put(K key, V value) {
-
+        Entry<K,V> entry = this.root;
+        for (int i = 0; i < primes.size(); i++) {
+            int remainder = remainder(key,0);
+            Entry<K,V>[] slots = entry.getSlots();
+            if (slots == null) entry.slots = new Entry[primes.get(i)];
+            if (slots[remainder] == null || slots[remainder].deleted){
+                slots[remainder] = new Entry<>(key,value);
+            }
+        }
         return null;
     }
 
@@ -69,7 +90,7 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public void clear() {
-
+        this.root.slots = null;
     }
 
     @Override
@@ -93,7 +114,7 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
 
         V value;
 
-        Entry<K, V> slots;
+        Entry<K, V>[] slots;
 
         boolean deleted;
 
@@ -101,8 +122,9 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
 
         }
 
-        Entry(K key, V value, int prime){
-
+        Entry(K key, V value){
+            this.key = key;
+            this.value = value;
         }
 
         @Override
@@ -113,6 +135,10 @@ public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
         @Override
         public V getValue() {
             return value;
+        }
+
+        public Entry<K, V>[] getSlots(){
+            return slots;
         }
 
         @Override

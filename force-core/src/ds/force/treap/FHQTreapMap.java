@@ -295,6 +295,10 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
         return sequence;
     }
 
+    public FHQTreapMap<K,V> split(K key){
+        return null;
+    }
+
     /**
      * Returns this map's entry for the given key, or {@code null} if the map
      * does not contain an entry for the key.

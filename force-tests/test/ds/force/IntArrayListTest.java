@@ -1,5 +1,6 @@
 package ds.force;
 
+import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;

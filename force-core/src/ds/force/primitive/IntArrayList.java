@@ -1,4 +1,4 @@
-package ds.force;
+package ds.force.primitive;
 
 import java.io.Serializable;
 import java.util.AbstractList;
