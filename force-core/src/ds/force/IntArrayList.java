@@ -483,6 +483,10 @@ public class IntArrayList implements Cloneable, Serializable {
         return batchRemove(c, false);
     }
 
+    public static IntArrayList of(int...number){
+        return new IntArrayList(number);
+    }
+
 
 //    /**
 //     * {@inheritDoc}

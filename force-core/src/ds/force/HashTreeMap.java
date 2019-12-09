@@ -4,21 +4,29 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-public class HashTreeMap<K extends Number,V> implements Map<K,V> {
+public class  HashTreeMap<K extends Number,V> implements Map<K,V> {
+
+    private static final IntArrayList primes = IntArrayList.of(7,11,13,17,19,23,29,31,37,41);
 
     transient Entry<K,V> root;
 
-    private int size;
+    transient final IntUnaryFunction<K> modFunction;
 
+    public HashTreeMap() {
+        this.root = new Entry<>();
+        this.modFunction = null;
+    }
+
+    private int size;
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return size == 0;
     }
 
     @Override
@@ -31,6 +39,13 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
         return false;
     }
 
+    private int remainder(K key, int prime){
+        if (modFunction != null) {
+            return modFunction.applyAsInt(key,prime);
+        }
+        return (int)(key.longValue() % prime);
+    }
+
     @Override
     public V get(Object key) {
         return null;
@@ -38,6 +53,7 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public V put(K key, V value) {
+
         return null;
     }
 
@@ -80,6 +96,14 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
         Entry<K, V> slots;
 
         boolean deleted;
+
+        Entry() {
+
+        }
+
+        Entry(K key, V value, int prime){
+
+        }
 
         @Override
         public K getKey() {
