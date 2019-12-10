@@ -5,6 +5,8 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Spliterator;
+
 /**
  * A list for storage basic data type by int. But not implementation List<E> {@code List<E>}
  *
@@ -505,4 +507,7 @@ public class IntArrayList implements Cloneable, Serializable {
 //                return false;
 //        return true;
 //    }
+    public Spliterator.OfInt spliterator() {
+        return Arrays.spliterator(elementData);
+    }
 }
