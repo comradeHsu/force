@@ -21,6 +21,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.Throughput)
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @Fork(2)
 @Warmup(iterations = 2)
-@Measurement(iterations = 4)
+@Measurement(iterations = 10)
 public class FastArrayListBenchmark {
 
     @Param({"1000", "10000", "50000", "100000"})
@@ -37,6 +38,8 @@ public class FastArrayListBenchmark {
     private FastArrayList<Integer> array;
 
     private List<Integer> list;
+
+    Random random = new Random();
 
     @Setup(Level.Trial)
     public void init() {
@@ -85,7 +88,7 @@ public class FastArrayListBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options options = new OptionsBuilder().include(IntArrayListBenchmark.class.getSimpleName()).build();
+        Options options = new OptionsBuilder().include(FastArrayListBenchmark.class.getSimpleName()).build();
         new Runner(options).run();
     }
 }

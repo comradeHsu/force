@@ -1,9 +1,10 @@
 package ds.force;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EmptyStackException;
 
-public class MonotonicStack<E extends Comparable> implements Stack<E> {
+public class MonotonicStack<E> implements Stack<E> {
 
     /**
      * Default initial capacity.
@@ -31,23 +32,35 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
      */
     transient Object[] elements;
 
+    /**
+     * The comparator used to maintain order in this stack, or
+     * null if it uses the natural ordering of its keys.
+     *
+     * @serial
+     */
+    private final Comparator<? super E> comparator;
+
     transient boolean isIncrease;
 
     private int size;
 
     public MonotonicStack(){
-        this(DEFAULT_CAPACITY,true);
+        this(DEFAULT_CAPACITY,true,null);
     }
 
     public MonotonicStack(int initCapacity){
-        this(initCapacity,true);
+        this(initCapacity,true,null);
     }
 
     public MonotonicStack(boolean isIncrease){
-        this(DEFAULT_CAPACITY,isIncrease);
+        this(DEFAULT_CAPACITY,isIncrease,null);
     }
 
-    public MonotonicStack(int initCapacity, boolean isIncrease){
+    public MonotonicStack(boolean isIncrease, Comparator<? super E> comparator){
+        this(DEFAULT_CAPACITY,isIncrease,comparator);
+    }
+
+    public MonotonicStack(int initCapacity, boolean isIncrease,Comparator<? super E> comparator){
         if (initCapacity > 0) {
             this.elements = new Object[initCapacity];
         } else if (initCapacity == 0) {
@@ -57,6 +70,7 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
                     initCapacity);
         }
         this.isIncrease = isIncrease;
+        this.comparator = comparator;
     }
 
     @Override
@@ -126,10 +140,19 @@ public class MonotonicStack<E extends Comparable> implements Stack<E> {
 
     @SuppressWarnings("unchecked")
     private boolean comparePeekEle(E item){
+        if (comparator != null) return comparePeekEleUsingComparator(item);
+        Comparable<? super E> c = (Comparable<? super E>) peek();
         if (isIncrease)
-            return peek().compareTo(item) >= 0;
+            return c.compareTo(item) >= 0;
         else
-            return peek().compareTo(item) <= 0;
+            return c.compareTo(item) <= 0;
+    }
+
+    private boolean comparePeekEleUsingComparator(E item){
+        if (isIncrease)
+            return comparator.compare(peek(),item) >= 0;
+        else
+            return comparator.compare(peek(),item) <= 0;
     }
 
     @Override
