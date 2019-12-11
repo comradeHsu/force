@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Thread)
-@Fork(2)
-@Warmup(iterations = 1)
-@Measurement(iterations = 2)
+@Fork(1)
+@Warmup(iterations = 1,time = 1)
+@Measurement(iterations = 2,time = 1,timeUnit = TimeUnit.SECONDS)
 public class HashTreeMapBenchmark {
 
-    @Param({"1000", "5000", "10000", "25000"})
+    @Param({"10000", "50000", "10000"})
     private int n;
 
     private HashTreeMap<Long,Long> treeMap;
@@ -84,7 +84,8 @@ public class HashTreeMapBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options options = new OptionsBuilder().include(HashTreeMapBenchmark.class.getSimpleName()).build();
+        Options options = new OptionsBuilder().include(HashTreeMapBenchmark.class.getSimpleName())
+                .jvmArgs("-Xms2018M","-Xmx2048M").build();
         new Runner(options).run();
     }
 }
