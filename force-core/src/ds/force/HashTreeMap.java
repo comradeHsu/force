@@ -2,15 +2,7 @@ package ds.force;
 
 import ds.force.primitive.IntArrayList;
 
-import java.util.AbstractSet;
-import java.util.ArrayDeque;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class HashTreeMap<K extends Number,V> implements Map<K,V> {
@@ -19,14 +11,29 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     transient Entry<K,V> root;
 
+    private int size;
+
+    /**
+     * Holds cached entrySet(). Note that AbstractMap fields are used
+     * for keySet() and values().
+     */
+    transient Set<Map.Entry<K,V>> entrySet;
+
     transient final IntUnaryFunction<K> modFunction;
+
+    transient Set<K> keySet;
+
+    transient Collection<V> values;
 
     public HashTreeMap() {
         this.root = new Entry<>();
         this.modFunction = null;
     }
 
-    private int size;
+    public HashTreeMap(Map<? extends K, ? extends V> m) {
+        this();
+        putAll(m);
+    }
 
     private static class Entry<K extends Number, V> implements Map.Entry<K,V> {
 
@@ -195,7 +202,9 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-
+        for(Map.Entry<? extends K, ? extends V> entry : m.entrySet()){
+            put(entry.getKey(),entry.getValue());
+        }
     }
 
     @Override
@@ -206,17 +215,97 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
 
     @Override
     public Set<K> keySet() {
-        return null;
+        Set<K> ks = keySet;
+        if (ks == null) {
+            ks = new KeySet();
+            keySet = ks;
+        }
+        return ks;
+    }
+
+    final class KeySet extends AbstractSet<K> {
+        public final int size()                 { return size; }
+        public final void clear()               { HashTreeMap.this.clear(); }
+        public final Iterator<K> iterator()     { return new KeyIterator(); }
+        public final boolean contains(Object o) { return containsKey(o); }
+        public final boolean remove(Object key) {
+            return HashTreeMap.this.remove(key) != null;
+        }
+        public final Spliterator<K> spliterator() {
+            return new KeySpliterator<>(HashTreeMap.this, 0, -1, 0);
+        }
+        public final void forEach(Consumer<? super K> action) {
+            Entry<K,V>[] tab;
+            if (action == null)
+                throw new NullPointerException();
+            if (size > 0 && (tab = root.getSlots()) != null) {
+                Deque<Entry<K,V>> stack = new ArrayDeque<>(size);
+                for (Entry<K,V> entry : tab){
+                    if (entry != null)
+                        stack.push(entry);
+                }
+                while (!stack.isEmpty()){
+                    Entry<K,V> e = stack.pop();
+                    if (e.alive()) action.accept(e.key);
+                    if (e.getSlots() == null) {
+                        continue;
+                    }
+                    for (Entry<K,V> entry : e.getSlots()){
+                        if (entry != null)
+                            stack.push(entry);
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public Collection<V> values() {
-        return null;
+        Collection<V> vs = values;
+        if (vs == null) {
+            vs = new Values();
+            values = vs;
+        }
+        return vs;
+    }
+
+    final class Values extends AbstractCollection<V> {
+        public final int size()                 { return size; }
+        public final void clear()               { HashTreeMap.this.clear(); }
+        public final Iterator<V> iterator()     { return new ValueIterator(); }
+        public final boolean contains(Object o) { return containsValue(o); }
+        public final Spliterator<V> spliterator() {
+            return new ValueSpliterator<>(HashTreeMap.this, 0, -1, 0);
+        }
+        public final void forEach(Consumer<? super V> action) {
+            Entry<K,V>[] tab;
+            if (action == null)
+                throw new NullPointerException();
+            if (size > 0 && (tab = root.getSlots()) != null) {
+                Deque<Entry<K,V>> stack = new ArrayDeque<>(size);
+                for (Entry<K,V> entry : tab){
+                    if (entry != null)
+                        stack.push(entry);
+                }
+                while (!stack.isEmpty()){
+                    Entry<K,V> e = stack.pop();
+                    if (e.alive()) action.accept(e.value);
+                    if (e.getSlots() == null) {
+                        continue;
+                    }
+                    for (Entry<K,V> entry : e.getSlots()){
+                        if (entry != null)
+                            stack.push(entry);
+                    }
+                }
+            }
+        }
     }
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        return null;
+        Set<Map.Entry<K,V>> es;
+        return (es = entrySet) == null ? (entrySet = new EntrySet()) : es;
     }
 
     final class EntrySet extends AbstractSet<Map.Entry<K,V>> {
@@ -261,7 +350,7 @@ public class HashTreeMap<K extends Number,V> implements Map<K,V> {
                         continue;
                     }
                     for (Entry<K,V> entry : e.getSlots()){
-                        if (entry != null && !entry.deleted)
+                        if (entry != null)
                             stack.push(entry);
                     }
                 }

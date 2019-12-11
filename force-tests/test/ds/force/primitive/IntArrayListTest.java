@@ -1,10 +1,11 @@
-package ds.force;
+package ds.force.primitive;
 
 import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class IntArrayListTest extends TestCase {
 
@@ -101,5 +102,13 @@ public class IntArrayListTest extends TestCase {
         for (int i = 0; i < 10000; i++){
             arrayList.add(i);
         }
+    }
+
+    public void testStream() {
+        IntArrayList list = IntArrayList.of(1,2,3,4,5,6,7,8,9,10);
+        IntStream stream = list.stream();
+        stream.forEach(System.out::println);
+        IntStream streamm = list.parallelStream();
+        streamm.forEach(System.out::println);
     }
 }
