@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Measurement(iterations = 2,time = 1,timeUnit = TimeUnit.SECONDS)
 public class HashTreeMapBenchmark {
 
-    @Param({"10000", "50000", "10000"})
+    @Param({"5000000"})
     private int n;
 
     private HashTreeMap<Long,Long> treeMap;
