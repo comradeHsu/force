@@ -130,7 +130,7 @@ public class BinaryIndexedTree<E> {
         dataTable[index] = value;
         E diff = subFunction.apply(oldValue,value);
         while(index < size){
-            treeArray[index] = subFunction.apply(oldValue,value);
+            treeArray[index] = subFunction.apply((E) treeArray[index],diff);
             index += lowBit(index);
         }
     }
