@@ -234,10 +234,22 @@ public class BTreeMap<K,V> implements Map<K,V>{
                 int nodePoint = nodePoint(node);
                 BTreeNode<K,V>[] childes = node.parent.childes;
                 if (childes[nodePoint-1].keys[degree-1] != null){
-
+                    NodeEntry<K,V> point = node.parent.keys[nodePoint-1];
+                    int lastKeyIndex = getLastKeyIndex(childes[nodePoint-1]);
+                    node.parent.keys[nodePoint-1] = childes[nodePoint-1].keys[lastKeyIndex];
+                    ArrayUtil.add(node.childes,0,childes[nodePoint-1].childes[lastKeyIndex+1]);
+                    ArrayUtil.add(node.keys,0,point);
+                    childes[nodePoint-1].keys[lastKeyIndex] = null;
+                    childes[nodePoint-1].childes[lastKeyIndex+1] = null;
                 }
                 else if (childes[nodePoint+1].keys[degree-1] != null){
-
+                    NodeEntry<K,V> point = node.parent.keys[nodePoint];
+                    int lastKeyIndex = degree - 2;
+                    node.parent.keys[nodePoint-1] = childes[nodePoint+1].keys[0];
+                    ArrayUtil.remove(childes[nodePoint+1].keys,0);
+                    node.keys[lastKeyIndex+1] = point;
+                    node.childes[lastKeyIndex+2] = childes[nodePoint+1].childes[0];
+                    ArrayUtil.remove(childes[nodePoint+1].childes,0);
                 }
                 else {
 
@@ -269,6 +281,19 @@ public class BTreeMap<K,V> implements Map<K,V>{
             }
         }
         return null;
+    }
+
+    /**
+     * only non-root node
+     * @param node
+     * @return
+     */
+    private int getLastKeyIndex(BTreeNode<K,V> node){
+        for (int i = degree-1; i < node.keys.length; i++) {
+            if (node.keys[i] == null)
+                return i-1;
+        }
+        return -1;
     }
 
     @Override
