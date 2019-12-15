@@ -14,4 +14,14 @@ public class BTreeMapTest extends TestCase {
             map.put(i,i);
         }
     }
+
+    public void testRemove(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>();
+        map.put(3,3);
+        map.put(2,2);
+        map.put(4,4);
+        map.put(5,5);
+        map.remove(2);
+        map.remove(3);
+    }
 }

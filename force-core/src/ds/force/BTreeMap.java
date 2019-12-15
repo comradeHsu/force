@@ -220,20 +220,30 @@ public class BTreeMap<K,V> implements Map<K,V>{
         System.arraycopy(right.childes, 0, left.childes, degree,
                 degree);
         ArrayUtil.remove(node.childes,keyPoint+1);
+        if (node.parent == null && node.keys[1] == null){
+            this.root = left;
+            left.parent = null;
+        }
     }
 
     @Override
     public V remove(Object key) {
+        if (comparator != null)
+            return remove(key,comparator::compare);
+        return remove(key,(k1, k2) -> ((Comparable<? super K>)k1).compareTo(k2));
+    }
+
+    public V remove(Object key, final ToIntBiFunction<K,K> compare) {
         BTreeNode<K,V> target = null;
-        final ToIntBiFunction<K,K> compare = null;
         K k = (K) key;
+        V value = null;
         BTreeNode<K,V> node = this.root;
         while(node != null){
             int index = 0;
             if (node != root && node.keys[degree-1] == null){
                 int nodePoint = nodePoint(node);
                 BTreeNode<K,V>[] childes = node.parent.childes;
-                if (childes[nodePoint-1].keys[degree-1] != null){
+                if (nodePoint != 0 && childes[nodePoint-1].keys[degree-1] != null){
                     NodeEntry<K,V> point = node.parent.keys[nodePoint-1];
                     int lastKeyIndex = getLastKeyIndex(childes[nodePoint-1]);
                     node.parent.keys[nodePoint-1] = childes[nodePoint-1].keys[lastKeyIndex];
@@ -242,17 +252,18 @@ public class BTreeMap<K,V> implements Map<K,V>{
                     childes[nodePoint-1].keys[lastKeyIndex] = null;
                     childes[nodePoint-1].childes[lastKeyIndex+1] = null;
                 }
-                else if (childes[nodePoint+1].keys[degree-1] != null){
+                else if (nodePoint != node.childes.length-1 && childes[nodePoint+1].keys[degree-1] != null){
                     NodeEntry<K,V> point = node.parent.keys[nodePoint];
                     int lastKeyIndex = degree - 2;
-                    node.parent.keys[nodePoint-1] = childes[nodePoint+1].keys[0];
+                    node.parent.keys[nodePoint] = childes[nodePoint+1].keys[0];
                     ArrayUtil.remove(childes[nodePoint+1].keys,0);
                     node.keys[lastKeyIndex+1] = point;
                     node.childes[lastKeyIndex+2] = childes[nodePoint+1].childes[0];
                     ArrayUtil.remove(childes[nodePoint+1].childes,0);
                 }
                 else {
-
+                    int point = nodePoint != 0 ? nodePoint-1 : nodePoint;
+                    merge(node.parent,point);
                 }
             }
             for (int i = index; i < node.keys.length; i++) {
@@ -260,27 +271,40 @@ public class BTreeMap<K,V> implements Map<K,V>{
                 int cmp = compare.applyAsInt(k, node.keys[i].key);
                 if (cmp < 0) break;
                 else if (cmp > 0) index++;
-                else break;
+                else {
+                    target = node;
+                    value = node.keys[i].value;
+                    break;
+                }
             }
             node = node.childes[index];
         }
-        if (target != null){
-            int keyPoint = keyPoint(target,k);
+        int keyPoint = keyPoint(target,k);
+        while (target != null){
             if (target.isLeaf()){
-
+                ArrayUtil.remove(target.keys,keyPoint);
+                size--;
+                break;
             } else {
                 if (target.childes[keyPoint].keys[degree-1] != null){
-
+                    int lastKeyIndex = getLastKeyIndex(target.childes[keyPoint]);
+                    target.keys[keyPoint] = target.childes[keyPoint].keys[lastKeyIndex];
+                    target = target.childes[keyPoint];
+                    keyPoint = lastKeyIndex;
                 }
                 else if (target.childes[keyPoint+1].keys[degree-1] != null){
-
+                    target.keys[keyPoint] = target.childes[keyPoint+1].keys[0];
+                    target = target.childes[keyPoint+1];
+                    keyPoint = 0;
                 }
                 else {
                     merge(target,keyPoint);
+                    target = target.childes[keyPoint];
+                    keyPoint = degree - 1;
                 }
             }
         }
-        return null;
+        return value;
     }
 
     /**
