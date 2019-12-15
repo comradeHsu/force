@@ -81,9 +81,10 @@ public class Heap<E> implements Cloneable, Serializable {
     }
 
     /**
-     * 向堆中插入一个元素
-     * @param e
-     * @return
+     * insert element to this heap
+     * @param e element
+     * @throws NullPointerException when element is null
+     * @return true
      */
     public boolean insert(E e){
         int i = size;
@@ -98,7 +99,8 @@ public class Heap<E> implements Cloneable, Serializable {
     }
 
     /**
-     * 删除堆的顶点并返回
+     * remove and return the top's element of heap
+     * @throws NullPointerException when heap is empty
      * @return
      */
     @SuppressWarnings("unchecked")
@@ -115,15 +117,25 @@ public class Heap<E> implements Cloneable, Serializable {
         return result;
     }
 
+    /**
+     * return the top of heap
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public E peek(){
         return (E)table[0];
     }
 
+    /**
+     * remove element at the index of heap
+     * @param index
+     * @throws IllegalArgumentException illegal index
+     * @return old element at index
+     */
     @SuppressWarnings("unchecked")
     public E removeAtIndex(int index){
-        if (index >= size){
-            throw new IllegalArgumentException("index too big");
+        if (index >= size || index < 0){
+            throw new IllegalArgumentException("illegal index");
         }
         int s = --size;
         E result = (E)table[index];
@@ -302,7 +314,7 @@ public class Heap<E> implements Cloneable, Serializable {
         int half = size >>> 1;
         while (index < half) {
             int child = (index << 1) + 1;
-            Object c = (E)table[child];
+            Object c = table[child];
             int right = child + 1;
             if (isMaxTop){
                 if (right < size && ((Comparable<? super E>) c).compareTo((E)table[right]) < 0)

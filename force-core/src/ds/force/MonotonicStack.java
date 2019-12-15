@@ -47,7 +47,10 @@ public class MonotonicStack<E> implements Stack<E> {
      * @serial
      */
     private final Comparator<? super E> comparator;
-
+    /**
+     * if true this stack is a monotonic increase stack
+     * else a monotonic decrease stack
+     */
     transient boolean isIncrease;
 
     /**
@@ -78,7 +81,10 @@ public class MonotonicStack<E> implements Stack<E> {
     public MonotonicStack(boolean isIncrease){
         this(DEFAULT_CAPACITY,isIncrease,null);
     }
-
+    /**
+     * Constructs an empty stack with a initial capacity of ten and isIncrease param and comparator.
+     * @see  MonotonicStack#isIncrease
+     */
     public MonotonicStack(boolean isIncrease, Comparator<? super E> comparator){
         this(DEFAULT_CAPACITY,isIncrease,comparator);
     }
