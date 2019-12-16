@@ -7,9 +7,9 @@ import java.util.*;
 
 public class BTreeMapTest extends TestCase {
 
-    public String btreeToString(BTreeMap.BTreeNode node){
+    public static <K,V> String btreeToString(BTreeMap.BTreeNode<K,V> node){
         if (node == null) return "";
-        BTreeMap.BTreeNode treeNode = node;
+        BTreeMap.BTreeNode<K,V> treeNode = node;
         StringBuilder bts = new StringBuilder();
         for(BTreeMap.BTreeNode bTreeNode : treeNode.childes){
             if (bTreeNode != null){
@@ -59,13 +59,13 @@ public class BTreeMapTest extends TestCase {
         map.remove(41);
         assertEquals("-->3-->19|20-->14-->27-->37-->48-->34|46-->21",btreeToString(map.root));
         map.remove(21);
-        assertEquals("-->3-->19-->27-->14|20-->37-->48-->46-->34",btreeToString(map.root));
+        assertEquals("-->3-->19|20-->14-->34|37-->48-->46-->27",btreeToString(map.root));
         map.remove(14);
-        assertEquals("-->3|19-->27-->20-->37-->48-->46-->34",btreeToString(map.root));
+        assertEquals("-->3-->20-->34|37-->48-->19|27|46",btreeToString(map.root));
         map.remove(20);
-        assertEquals("-->3-->27-->37-->48-->19|34|46",btreeToString(map.root));
+        assertEquals("-->3-->27-->37-->48-->19|27|46",btreeToString(map.root));
         map.remove(3);
-        assertEquals("-->19|27-->37-->48-->34|46",btreeToString(map.root));
+        assertEquals("-->19-->34|37-->48-->27|46",btreeToString(map.root));
         map.remove(37);
         assertEquals("-->19-->34-->48-->27|46",btreeToString(map.root));
         map.remove(48);

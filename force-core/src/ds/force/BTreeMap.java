@@ -3,10 +3,7 @@ package ds.force;
 import com.sun.istack.internal.NotNull;
 import ds.force.util.ArrayUtil;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.ToIntBiFunction;
 
 public class BTreeMap<K,V> implements Map<K,V>{
@@ -79,14 +76,14 @@ public class BTreeMap<K,V> implements Map<K,V>{
         BTreeNode<K,V> node = this.root;
         while(node != null){
             int index = 0;
-            for (int i = index; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = compare.applyAsInt(key, node.keys[i].key);
+            for (int i = index; i < node.keys.size(); i++) {
+                if (node.keys.get(i) == null) break;
+                int cmp = compare.applyAsInt(key, node.keys.get(i).key);
                 if (cmp < 0) break;
                 else if (cmp > 0) index++;
                 else return node;
             }
-            node = node.childes[index];
+            node = node.childes.get(index);
         }
         return null;
     }
@@ -99,129 +96,73 @@ public class BTreeMap<K,V> implements Map<K,V>{
        return putUsingFunction(key, value, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
     }
 
-    private V putUsingComparator(K key, V value){
-        BTreeNode<K,V> node = this.root, preNode = this.root;
-        int index = 0;
-        while(node != null){
-            index = 0;
-            if (node.keys[node.keys.length-1] != null){
-                int preIndex = split(node);
-                node = node.parent;
-                index = preIndex;
-            }
-            for (int i = 0; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = comparator.compare(key, node.keys[i].key);
-                if (cmp < 0) break;
-                else if (cmp > 0) index++;
-            }
-            preNode = node;
-            node = node.childes[index];
-        }
-        NodeEntry<K,V> newNode = new NodeEntry<>(key,value);
-        ArrayUtil.add(preNode.keys,index,newNode);
-        size++;
-        return null;
-    }
-
     private V putUsingFunction(K key, V value, final ToIntBiFunction<K,K> compare){
         BTreeNode<K,V> node = this.root, preNode = this.root;
         int index = 0;
+        int last = (degree << 1) - 1;
         while(node != null){
             index = 0;
-            if (node.keys[node.keys.length-1] != null){
+            if (node.keys.size() == last){
                 int preIndex = split(node);
                 node = preNode;
-//                continue;
                 index = preIndex;
             }
-            for (int i = index; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = compare.applyAsInt(key, node.keys[i].key);
+            for (int i = index; i < node.keys.size(); i++) {
+                if (node.keys.get(i) == null) break;
+                int cmp = compare.applyAsInt(key, node.keys.get(i).key);
                 if (cmp < 0) break;
                 else if (cmp > 0) index++;
-                else return node.keys[i].setValue(value);
+                else return node.keys.get(i).setValue(value);
             }
             preNode = node;
-            node = node.childes[index];
+            node = node.childes.size() == 0 ? null : node.childes.get(index);
         }
         NodeEntry<K,V> newNode = new NodeEntry<>(key,value);
-        ArrayUtil.add(preNode.keys,index,newNode);
+        preNode.keys.add(index,newNode);
         size++;
-        return null;
-    }
-
-    private V putComparable(K key, V value){
-        BTreeNode<K,V> node = this.root, preNode = this.root;
-        int index = 0;
-        Comparable<? super K> k = (Comparable<? super K>) key;
-        while(node != null){
-            index = 0;
-            if (node.keys[node.keys.length-1] != null){
-                int preIndex = split(node);
-                node = node.parent;
-                index = preIndex;
-            }
-            for (int i = 0; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = k.compareTo(node.keys[i].key);
-                if (cmp < 0) break;
-                else if (cmp > 0) index++;
-            }
-            preNode = node;
-            node = node.childes[index];
-        }
-        NodeEntry<K,V> newNode = new NodeEntry<>(key,value);
-        ArrayUtil.add(preNode.keys,index,newNode);
         return null;
     }
 
     final int split(BTreeNode<K,V> node){
         BTreeNode<K,V> left = new BTreeNode<>(degree,null);
-        int keysHalf = node.keys.length >> 1;
-        int childesHalf = node.childes.length >> 1;
-        System.arraycopy(node.keys, 0, left.keys, 0,
-               keysHalf);
-        System.arraycopy(node.childes, 0, left.childes, 0,
-                childesHalf);
+        int keysHalf = node.keys.size() >> 1;
+        int childesHalf = node.childes.size() >> 1;
+        left.keys.addAll(node.keys.subList(0,keysHalf));
+        left.childes.addAll(node.childes.subList(0,childesHalf));
         BTreeNode<K,V> right = new BTreeNode<>(degree,null);
-        System.arraycopy(node.keys, keysHalf+1, right.keys, 0,
-                keysHalf);
-        System.arraycopy(node.childes, keysHalf+1, right.childes, 0,
-                childesHalf);
-        NodeEntry<K,V> half = node.keys[keysHalf];
+        right.keys.addAll(node.keys.subList(keysHalf+1,node.keys.size()));
+        right.childes.addAll(node.childes.subList(childesHalf,node.childes.size()));
+        NodeEntry<K,V> half = node.keys.get(keysHalf);
         for (int i = 0; i < childesHalf; i++){
-            if (left.childes[i] != null) left.childes[i].parent = left;
-            if (right.childes[i] != null) right.childes[i].parent = right;
+            if (left.childes.get(i) != null) left.childes.get(i).parent = left;
+            if (right.childes.get(i) != null) right.childes.get(i).parent = right;
         }
         if (node.parent == null){
             node.clear();
-            node.keys[0] = half;
-            node.childes[0] = left;
-            node.childes[1] = right;
+            node.keys.add(half);
+            node.childes.add(left);
+            node.childes.add(right);
             left.parent = right.parent = node;
             return 0;
         }
         int insertIndex = keyPoint(node.parent,half.key);
-        ArrayUtil.add(node.parent.keys,insertIndex,half);
-        node.parent.childes[insertIndex] = left;
-        ArrayUtil.add(node.parent.childes,insertIndex+1,right);
+        node.parent.keys.add(insertIndex,half);
+        node.parent.childes.set(insertIndex,left);
+        node.parent.childes.add(insertIndex+1,right);
         left.parent = right.parent = node.parent;
         return insertIndex;
     }
 
     final void merge(BTreeNode<K,V> node,int keyPoint){
-        NodeEntry<K,V> k = node.keys[keyPoint];
-        BTreeNode<K,V> left = node.childes[keyPoint];
-        BTreeNode<K,V> right = node.childes[keyPoint+1];
-        ArrayUtil.remove(node.keys,keyPoint);
-        System.arraycopy(right.keys, 0, left.keys, degree,
-                degree-1);
-        left.keys[degree-1] = k;
-        System.arraycopy(right.childes, 0, left.childes, degree,
-                degree);
-        ArrayUtil.remove(node.childes,keyPoint+1);
-        if (node.parent == null && node.keys[0] == null){
+        NodeEntry<K,V> k = node.keys.get(keyPoint);
+        BTreeNode<K,V> left = node.childes.get(keyPoint);
+        BTreeNode<K,V> right = node.childes.get(keyPoint+1);
+        node.keys.remove(keyPoint);
+        left.keys.add(k);
+        left.keys.addAll(right.keys.subList(0,degree-1));
+        right.childes.addAll(degree,right.childes);
+        node.childes.remove(keyPoint+1);
+        if (node.parent == null && node.keys.size() == 0){
             this.root = left;
             left.parent = null;
         }
@@ -242,66 +183,66 @@ public class BTreeMap<K,V> implements Map<K,V>{
         BTreeNode<K,V> node = this.root;
         loop:while(node != null){
             int index = 0;
-            if (node != root && node.keys[degree-1] == null && !node.isLeaf()){
+            if (node != root && node.keys.get(degree-1) == null && !node.isLeaf()){
                 int nodePoint = nodePoint(node);
-                BTreeNode<K,V>[] childes = node.parent.childes;
-                if (nodePoint != 0 && childes[nodePoint-1].keys[degree-1] != null){
-                    NodeEntry<K,V> point = node.parent.keys[nodePoint-1];
-                    int lastKeyIndex = getLastKeyIndex(childes[nodePoint-1]);
-                    node.parent.keys[nodePoint-1] = childes[nodePoint-1].keys[lastKeyIndex];
-                    ArrayUtil.add(node.childes,0,childes[nodePoint-1].childes[lastKeyIndex+1]);
-                    ArrayUtil.add(node.keys,0,point);
-                    childes[nodePoint-1].keys[lastKeyIndex] = null;
-                    childes[nodePoint-1].childes[lastKeyIndex+1] = null;
+                List<BTreeNode<K,V>> childes = node.parent.childes;
+                if (nodePoint != 0 && childes.get(nodePoint-1).keys.get(degree-1) != null){
+                    NodeEntry<K,V> point = node.parent.keys.get(nodePoint-1);
+                    int lastKeyIndex = getLastKeyIndex(childes.get(nodePoint-1));
+                    node.parent.keys.set(nodePoint-1,childes.get(nodePoint-1).keys.get(lastKeyIndex));
+                    node.childes.add(0,childes.get(nodePoint-1).childes.get(lastKeyIndex+1));
+                    node.keys.add(0,point);
+                    childes.get(nodePoint-1).keys.set(lastKeyIndex,null);
+                    childes.get(nodePoint-1).childes.set(lastKeyIndex+1,null);
                 }
-                else if (childes[nodePoint+1] != null && childes[nodePoint+1].keys[degree-1] != null){
-                    NodeEntry<K,V> point = node.parent.keys[nodePoint];
+                else if (childes.get(nodePoint+1) != null && childes.get(nodePoint+1).keys.get(degree-1) != null){
+                    NodeEntry<K,V> point = node.parent.keys.get(nodePoint);
                     int lastKeyIndex = degree - 2;
-                    node.parent.keys[nodePoint] = childes[nodePoint+1].keys[0];
-                    ArrayUtil.remove(childes[nodePoint+1].keys,0);
-                    node.keys[lastKeyIndex+1] = point;
-                    node.childes[lastKeyIndex+2] = childes[nodePoint+1].childes[0];
-                    ArrayUtil.remove(childes[nodePoint+1].childes,0);
+                    node.parent.keys.set(nodePoint,childes.get(nodePoint+1).keys.get(0));
+                    childes.get(nodePoint+1).keys.remove(0);
+                    node.keys.set(lastKeyIndex+1,point);
+                    node.childes.set(lastKeyIndex+2,childes.get(nodePoint+1).childes.get(0));
+                    childes.get(nodePoint+1).childes.remove(0);
                 }
                 else {
                     int point = nodePoint != 0 ? nodePoint-1 : nodePoint;
                     merge(node.parent,point);
                 }
             }
-            for (int i = index; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = compare.applyAsInt(k, node.keys[i].key);
+            for (int i = index; i < node.keys.size(); i++) {
+                if (node.keys.get(i) == null) break;
+                int cmp = compare.applyAsInt(k, node.keys.get(i).key);
                 if (cmp < 0) break;
                 else if (cmp > 0) index++;
                 else {
                     target = node;
-                    value = node.keys[i].value;
+                    value = node.keys.get(i).value;
                     keyPoint = i;
                     break loop;
                 }
             }
-            node = node.childes[index];
+            node = node.childes.get(index);
         }
         while (target != null){
             if (target.isLeaf()){
-                ArrayUtil.remove(target.keys,keyPoint);
+                target.keys.remove(keyPoint);
                 size--;
                 break;
             } else {
-                if (target.childes[keyPoint].keys[degree-1] != null){
-                    int lastKeyIndex = getLastKeyIndex(target.childes[keyPoint]);
-                    target.keys[keyPoint] = target.childes[keyPoint].keys[lastKeyIndex];
-                    target = target.childes[keyPoint];
+                if (target.childes.get(keyPoint).keys.get(degree-1) != null){
+                    int lastKeyIndex = target.childes.get(keyPoint).keys.size()-1;
+                    target.keys.set(keyPoint,target.childes.get(keyPoint).keys.get(lastKeyIndex));
+                    target = target.childes.get(keyPoint);
                     keyPoint = lastKeyIndex;
                 }
-                else if (target.childes[keyPoint+1].keys[degree-1] != null){
-                    target.keys[keyPoint] = target.childes[keyPoint+1].keys[0];
-                    target = target.childes[keyPoint+1];
+                else if (target.childes.get(keyPoint+1).keys.get(degree-1) != null){
+                    target.keys.set(keyPoint,target.childes.get(keyPoint+1).keys.get(0));
+                    target = target.childes.get(keyPoint+1);
                     keyPoint = 0;
                 }
                 else {
                     merge(target,keyPoint);
-                    target = target.childes[keyPoint];
+                    target = target.childes.get(keyPoint);
                     keyPoint = degree - 1;
                 }
             }
@@ -317,65 +258,65 @@ public class BTreeMap<K,V> implements Map<K,V>{
         BTreeNode<K,V> node = this.root;
         loop:while(node != null){
             int index = 0;
-            if (node != root && node.keys[degree-1] == null){
+            if (node != root && node.keys.size() == degree-1){
                 int nodePoint = nodePoint(node);
-                BTreeNode<K,V>[] childes = node.parent.childes;
-                if (nodePoint != 0 && childes[nodePoint-1].keys[degree-1] != null){
-                    NodeEntry<K,V> point = node.parent.keys[nodePoint-1];
-                    int lastKeyIndex = getLastKeyIndex(childes[nodePoint-1]);
-                    node.parent.keys[nodePoint-1] = childes[nodePoint-1].keys[lastKeyIndex];
-                    ArrayUtil.add(node.childes,0,childes[nodePoint-1].childes[lastKeyIndex+1]);
-                    ArrayUtil.add(node.keys,0,point);
-                    childes[nodePoint-1].keys[lastKeyIndex] = null;
-                    childes[nodePoint-1].childes[lastKeyIndex+1] = null;
+                List<BTreeNode<K,V>> childes = node.parent.childes;
+                if (nodePoint != 0 && childes.get(nodePoint-1).keys.get(degree-1) != null){
+                    NodeEntry<K,V> point = node.parent.keys.get(nodePoint-1);
+                    int lastKeyIndex = getLastKeyIndex(childes.get(nodePoint-1));
+                    node.parent.keys.set(nodePoint-1,childes.get(nodePoint-1).keys.get(lastKeyIndex));
+                    node.childes.add(0,childes.get(nodePoint-1).childes.get(lastKeyIndex+1));
+                    node.keys.add(0,point);
+                    childes.get(nodePoint-1).keys.set(lastKeyIndex,null);
+                    childes.get(nodePoint-1).childes.set(lastKeyIndex+1,null);
                 }
-                else if (childes[nodePoint+1] != null && childes[nodePoint+1].keys[degree-1] != null){
-                    NodeEntry<K,V> point = node.parent.keys[nodePoint];
+                else if (childes.get(nodePoint+1) != null && childes.get(nodePoint+1).keys.get(degree-1) != null){
+                    NodeEntry<K,V> point = node.parent.keys.get(nodePoint);
                     int lastKeyIndex = degree - 2;
-                    node.parent.keys[nodePoint] = childes[nodePoint+1].keys[0];
-                    ArrayUtil.remove(childes[nodePoint+1].keys,0);
-                    node.keys[lastKeyIndex+1] = point;
-                    node.childes[lastKeyIndex+2] = childes[nodePoint+1].childes[0];
-                    ArrayUtil.remove(childes[nodePoint+1].childes,0);
+                    node.parent.keys.set(nodePoint,childes.get(nodePoint+1).keys.get(0));
+                    childes.get(nodePoint+1).keys.remove(0);
+                    node.keys.set(lastKeyIndex+1,point);
+                    node.childes.set(lastKeyIndex+2,childes.get(nodePoint+1).childes.get(0));
+                    childes.get(nodePoint+1).childes.remove(0);
                 }
                 else {
                     int point = nodePoint != 0 ? nodePoint-1 : nodePoint;
                     merge(node.parent,point);
                 }
             }
-            for (int i = index; i < node.keys.length; i++) {
-                if (node.keys[i] == null) break;
-                int cmp = compare.applyAsInt(k, node.keys[i].key);
+            for (int i = index; i < node.keys.size(); i++) {
+                if (node.keys.get(i) == null) break;
+                int cmp = compare.applyAsInt(k, node.keys.get(i).key);
                 if (cmp < 0) break;
                 else if (cmp > 0) index++;
                 else {
                     target = node;
-                    value = node.keys[i].value;
+                    value = node.keys.get(i).value;
                     keyPoint = i;
                     if (target.isLeaf()) break loop;
-                    if (node.childes[i].keys[degree-1] != null){
-                        node = node.childes[i];
-                    } else if (target.childes[i+1].keys[degree-1] != null){
-                        node = node.childes[i+1];
+                    if (node.childes.get(i).keys.get(degree-1) != null){
+                        node = node.childes.get(i);
+                    } else if (target.childes.get(i+1).keys.get(degree-1) != null){
+                        node = node.childes.get(i+1);
                     } else {
                         merge(node,i);
-                        node = node.childes[i];
+                        node = node.childes.get(i);
                     }
                     continue loop;
                 }
             }
             replaceNode = node;
-            node = node.childes[index];
+            node = node.childes.size() == 0 ? null : node.childes.get(index);
         }
         if (target != null){
             if (target.isLeaf()){
-                ArrayUtil.remove(target.keys,keyPoint);
+                target.keys.remove(keyPoint);
                 size--;
             } else {
-                int replaceIndex = compare.applyAsInt(replaceNode.keys[0].key, target.keys[keyPoint].key) > 0 ?
-                        0 : getLastKeyIndex(replaceNode);
-                target.keys[keyPoint] = replaceNode.keys[replaceIndex];
-                replaceNode.keys[replaceIndex] = null;
+                int replaceIndex = compare.applyAsInt(replaceNode.keys.get(0).key, target.keys.get(keyPoint).key) > 0 ?
+                        0 : replaceNode.keys.size()-1;
+                target.keys.set(keyPoint,replaceNode.keys.get(replaceIndex));
+                replaceNode.keys.set(replaceIndex,null);
                 size--;
             }
         }
@@ -385,10 +326,10 @@ public class BTreeMap<K,V> implements Map<K,V>{
     final NodeEntry<K,V> getPrecursorEntry(@NotNull BTreeNode<K,V> precursorNode){
         NodeEntry<K,V> target = null;
         while (precursorNode != null){
-            for (int i = 0; i < precursorNode.keys.length; i++) {
-                if (precursorNode.keys[i] == null) {
-                    target = precursorNode.keys[i-1];
-                    precursorNode = precursorNode.childes[i];
+            for (int i = 0; i < precursorNode.keys.size(); i++) {
+                if (precursorNode.keys.get(i) == null) {
+                    target = precursorNode.keys.get(i-1);
+                    precursorNode = precursorNode.childes.get(i);
                     break;
                 }
             }
@@ -399,8 +340,8 @@ public class BTreeMap<K,V> implements Map<K,V>{
     final NodeEntry<K,V> getSuccessorEntry(@NotNull BTreeNode<K,V> successorNode){
         NodeEntry<K,V> target = null;
         while (successorNode != null){
-            target = successorNode.keys[0];
-            successorNode = successorNode.childes[0];
+            target = successorNode.keys.get(0);
+            successorNode = successorNode.childes.get(0);
         }
         return target;
     }
@@ -411,8 +352,8 @@ public class BTreeMap<K,V> implements Map<K,V>{
      * @return
      */
     private int getLastKeyIndex(BTreeNode<K,V> node){
-        for (int i = degree-1; i < node.keys.length; i++) {
-            if (node.keys[i] == null)
+        for (int i = degree-1; i < node.keys.size(); i++) {
+            if (node.keys.get(i) == null)
                 return i-1;
         }
         return -1;
@@ -445,9 +386,9 @@ public class BTreeMap<K,V> implements Map<K,V>{
     }
 
     int nodePoint(BTreeNode<K,V> node){
-        BTreeNode<K,V>[] childes = node.parent.childes;
-        for (int i = 0; i < childes.length; i++) {
-            if (childes[i] == node) return i;
+        List<BTreeNode<K,V>> childes = node.parent.childes;
+        for (int i = 0; i < childes.size(); i++) {
+            if (childes.get(i) == node) return i;
         }
         return -1;
     }
@@ -462,9 +403,9 @@ public class BTreeMap<K,V> implements Map<K,V>{
         int index = 0;
         @SuppressWarnings("unchecked")
         Comparable<? super K> k = (Comparable<? super K>) key;
-        for (int i = 0; i < node.keys.length; i++) {
-            if (node.keys[i] == null) break;
-            int cmp = k.compareTo(node.keys[i].key);
+        for (int i = 0; i < node.keys.size(); i++) {
+            if (node.keys.get(i) == null) break;
+            int cmp = k.compareTo(node.keys.get(i).key);
             if (cmp < 0) break;
             else if (cmp > 0) index++;
             else break;
@@ -474,9 +415,9 @@ public class BTreeMap<K,V> implements Map<K,V>{
 
     private int keyPointUsingComparator(BTreeNode<K,V> node, K key){
         int index = 0;
-        for (int i = 0; i < node.keys.length; i++) {
-            if (node.keys[i] == null) break;
-            int cmp = comparator.compare(key, node.keys[i].key);
+        for (int i = 0; i < node.keys.size(); i++) {
+            if (node.keys.get(i) == null) break;
+            int cmp = comparator.compare(key, node.keys.get(i).key);
             if (cmp < 0) break;
             else if (cmp > 0) index++;
             else break;
@@ -521,46 +462,43 @@ public class BTreeMap<K,V> implements Map<K,V>{
     private NodeEntry<K,V> getEntryComparable(BTreeNode<K,V> node,K key){
         @SuppressWarnings("unchecked")
         Comparable<? super K> k = (Comparable<? super K>) key;
-        for (int i = 0; i < node.keys.length; i++) {
-            if (key == node.keys[i].key || k.compareTo(node.keys[i].key) == 0)
-                return node.keys[i];
+        for (int i = 0; i < node.keys.size(); i++) {
+            if (key == node.keys.get(i).key || k.compareTo(node.keys.get(i).key) == 0)
+                return node.keys.get(i);
         }
         return null;
     }
 
     private NodeEntry<K,V> getEntryUsingComparator(BTreeNode<K,V> node,K key){
-        for (int i = 0; i < node.keys.length; i++) {
-            if (key == node.keys[i].key || comparator.compare(node.keys[i].key,key) == 0)
-                return node.keys[i];
+        for (int i = 0; i < node.keys.size(); i++) {
+            if (key == node.keys.get(i).key || comparator.compare(node.keys.get(i).key,key) == 0)
+                return node.keys.get(i);
         }
         return null;
     }
 
     protected static class BTreeNode<K,V> {
 
-        NodeEntry<K,V>[] keys;
+        List<NodeEntry<K,V>> keys;
 
-        BTreeNode<K,V>[] childes;
+        List<BTreeNode<K,V>> childes;
 
         BTreeNode<K,V> parent;
 
         @SuppressWarnings("unchecked")
         BTreeNode(int degree, BTreeNode<K,V> parent) {
-            this.keys = new NodeEntry[(degree<<1) - 1];
-            this.childes = new BTreeNode[degree<<1];
+            this.keys = new ArrayList<>((degree<<1) - 1);
+            this.childes = new ArrayList<>(degree<<1);
             this.parent = parent;
         }
 
         void clear(){
-            for (int i = 0; i < keys.length; i++) {
-                keys[i] = null;
-                childes[i] = null;
-            }
-            childes[keys.length] = null;
+            keys.clear();
+            childes.clear();
         }
 
         final boolean isLeaf(){
-            return childes[0] == null;
+            return childes.size() == 0;
         }
     }
 }
