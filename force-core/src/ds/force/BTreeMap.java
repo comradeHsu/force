@@ -440,4 +440,74 @@ public class BTreeMap<K,V> implements Map<K,V>{
         }
     }
 
+    /* ------------------------------------------------------------ */
+    // iterators
+
+    abstract class BTreeIterator {
+        NodeEntry<K,V> current;     // current entry
+        NodeEntry<K,V> next;
+        Deque<NodeEntry<K,V>> stack;
+        Deque<BTreeNode<K,V>> nodeStack;
+        BTreeIterator(NodeEntry<K,V> first) {
+            BTreeNode<K,V> t = root;
+            current = null;
+            stack = new ArrayDeque<>();
+            nodeStack = new ArrayDeque<>();
+            if (t != null && size > 0) { // advance to first entry
+                stack.addAll(t.keys);
+                if (!t.isLeaf()){
+                    nodeStack.addAll(t.childes);
+                }
+            }
+        }
+
+        public final boolean hasNext() {
+            return stack.isEmpty() && nodeStack.isEmpty();
+        }
+
+        final Entry<K,V> nextNode() {
+            Entry<K,V> e = stack.pop();
+            if (e.getSlots() != null) {
+                for (Entry<K,V> entry : e.getSlots()){
+                    if (entry != null)
+                        stack.push(entry);
+                }
+            }
+            return e;
+        }
+
+        final Entry<K,V> nextAliveNode() {
+            Entry<K,V> e = nextNode();
+            while (!e.alive()) {
+                e = nextNode();
+            }
+            current = e;
+            return e;
+        }
+
+        public final void remove() {
+            Entry<K,V> p = current;
+            if (p == null)
+                throw new IllegalStateException();
+            current = null;
+            K key = p.key;
+            HashTreeMap.this.remove(key);
+        }
+    }
+
+    final class KeyIterator extends BTreeIterator
+            implements Iterator<K> {
+        public final K next() { return nextAliveNode().key; }
+    }
+
+    final class ValueIterator extends BTreeIterator
+            implements Iterator<V> {
+        public final V next() { return nextAliveNode().value; }
+    }
+
+    final class EntryIterator extends BTreeIterator
+            implements Iterator<Map.Entry<K,V>> {
+        public final Map.Entry<K,V> next() { return nextAliveNode(); }
+    }
+
 }
