@@ -3,7 +3,10 @@ package ds.force;
 import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Random;
 
 public class BTreeMapTest extends TestCase {
 
@@ -63,9 +66,9 @@ public class BTreeMapTest extends TestCase {
         map.remove(14);
         assertEquals("-->3-->20-->34|37-->48-->19|27|46",btreeToString(map.root));
         map.remove(20);
-        assertEquals("-->3-->27-->37-->48-->19|27|46",btreeToString(map.root));
+        assertEquals("-->3-->27-->37-->48-->19|34|46",btreeToString(map.root));
         map.remove(3);
-        assertEquals("-->19-->34|37-->48-->27|46",btreeToString(map.root));
+        assertEquals("-->19|27-->37-->48-->34|46",btreeToString(map.root));
         map.remove(37);
         assertEquals("-->19-->34-->48-->27|46",btreeToString(map.root));
         map.remove(48);
@@ -76,16 +79,62 @@ public class BTreeMapTest extends TestCase {
         assertEquals("-->19|34",btreeToString(map.root));
         map.remove(34);
         assertEquals("-->19",btreeToString(map.root));
+        map.remove(19);
+        assertEquals("--",btreeToString(map.root));
+    }
+
+    public void testRemoves(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(3);
         Random random = new Random();
-//        List<Integer> list = new ArrayList<>();
-//        for (int i = 0; i < 25; i++) {
-//            int key = random.nextInt(50);
-//            list.add(key);
-//        }
-//        list.forEach(k -> map.put(k,k));
-        for (int i = 0; i < 10; i++) {
-            int key = random.nextInt(50);
+        for (int i = 0; i < 300000; i++) {
+            int key = random.nextInt(1000000);
+            map.put(key,key);
+        }
+        parentEq(map);
+        for (int i = 0; i < 300000; i++) {
+            int key = random.nextInt(1000000);
             map.remove(key);
+            parentEq(map);
+        }
+    }
+
+    public void testRemoveFixedData(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(3);
+        Random random = new Random();
+        IntArrayList list = IntArrayList.of(860,130,104,871,501,479,593,445,690,903,205,663,113,844,745,988,338,409,256,
+                680,400,631,90,566,680,169,445,903,871,5);
+        for (int i = 0; i < list.size(); i++) {
+            map.put(list.get(i),list.get(i));
+        }
+        parentEq(map);
+        map.remove(412);
+        parentEq(map);
+        map.remove(559);
+        parentEq(map);
+        map.remove(48);
+        parentEq(map);
+        map.remove(496);
+        parentEq(map);
+        map.remove(939);
+        parentEq(map);
+        for (int i = 0; i < 30; i++) {
+            int key = random.nextInt(1000);
+            map.remove(key);
+            System.out.println(key);
+            parentEq(map);
+        }
+    }
+
+    public void parentEq(BTreeMap map){
+        Deque<BTreeMap.BTreeNode> stack = new ArrayDeque<>();
+        stack.push(map.root);
+        while (!stack.isEmpty()){
+            BTreeMap.BTreeNode node = stack.pop();
+            List<BTreeMap.BTreeNode> childs = node.childes;
+            for (BTreeMap.BTreeNode treeNode: childs) {
+                assert treeNode.parent == node;
+                stack.push(treeNode);
+            }
         }
     }
 }
