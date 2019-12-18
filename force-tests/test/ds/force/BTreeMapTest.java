@@ -3,10 +3,8 @@ package ds.force;
 import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BTreeMapTest extends TestCase {
 
@@ -122,6 +120,21 @@ public class BTreeMapTest extends TestCase {
             map.remove(key);
             System.out.println(key);
             parentEq(map);
+        }
+    }
+
+    public void testIterator(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(3);
+        IntArrayList list = IntArrayList.of(860,130,104,871,501,479,593,445,690,903,205,663,113,844,745,988,338,409,256,
+                680,400,631,90,566,680,169,445,903,871,5);
+        for (int i = 0; i < list.size(); i++) {
+            map.put(list.get(i),list.get(i));
+        }
+        int[] array = list.stream().distinct().sorted().toArray();
+        int index = 0;
+        for (Map.Entry<Integer,Integer> entry : map.entrySet()){
+            assertEquals(Integer.valueOf(array[index]),entry.getKey());
+            index++;
         }
     }
 

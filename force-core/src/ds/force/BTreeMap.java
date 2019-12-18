@@ -1,9 +1,18 @@
 package ds.force;
 
 import com.sun.istack.internal.NotNull;
-import ds.force.util.ArrayUtil;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.ToIntBiFunction;
 
 public class BTreeMap<K,V> implements Map<K,V>{
@@ -40,6 +49,12 @@ public class BTreeMap<K,V> implements Map<K,V>{
         this.root = new BTreeNode<>(degree,null);
     }
 
+    public BTreeMap(int degree, Comparator<? super K> comparator){
+        this.comparator = comparator;
+        this.degree = degree;
+        this.root = new BTreeNode<>(degree,null);
+    }
+
     @Override
     public int size() {
         return size;
@@ -63,6 +78,9 @@ public class BTreeMap<K,V> implements Map<K,V>{
 
     @Override
     public boolean containsValue(Object value) {
+        for (Entry<K,V> e : entrySet())
+            if (valEquals(value, e.getValue()))
+                return true;
         return false;
     }
 
@@ -308,6 +326,17 @@ public class BTreeMap<K,V> implements Map<K,V>{
         this.size = 0;
     }
 
+    // Views
+
+    /**
+     * Fields initialized to contain an instance of the entry set view
+     * the first time this view is requested.  Views are stateless, so
+     * there's no reason to create more than one.
+     */
+    private transient EntrySet entrySet;
+//    private transient KeySet<K> navigableKeySet;
+//    private transient NavigableMap<K,V> descendingMap;
+
     @Override
     public Set<K> keySet() {
         return null;
@@ -320,7 +349,49 @@ public class BTreeMap<K,V> implements Map<K,V>{
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return null;
+        EntrySet es = entrySet;
+        return (es != null) ? es : (entrySet = new EntrySet());
+    }
+
+    class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+        public Iterator<Map.Entry<K,V>> iterator() {
+            return new EntryIterator();
+        }
+
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+            Object value = entry.getValue();
+            V p = get(entry.getKey());
+            return p != null && valEquals(p,value);
+        }
+
+        public boolean remove(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
+            Object value = entry.getValue();
+            V p = get(entry.getKey());
+            if (p != null && valEquals(p, value)) {
+                BTreeMap.this.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        }
+
+        public int size() {
+            return BTreeMap.this.size();
+        }
+
+        public void clear() {
+            BTreeMap.this.clear();
+        }
+
+        public Spliterator<Map.Entry<K,V>> spliterator() {
+            throw new UnsupportedOperationException();
+//            return new EntrySpliterator<K,V>(BTreeMap.this, null, null, 0, -1, 0);
+        }
     }
 
     int nodePoint(BTreeNode<K,V> node){
@@ -440,74 +511,80 @@ public class BTreeMap<K,V> implements Map<K,V>{
         }
     }
 
+    /**
+     * Test two values for equality.  Differs from o1.equals(o2) only in
+     * that it copes with {@code null} o1 properly.
+     */
+    static final boolean valEquals(Object o1, Object o2) {
+        return (o1==null ? o2==null : o1.equals(o2));
+    }
+
     /* ------------------------------------------------------------ */
     // iterators
 
     abstract class BTreeIterator {
         NodeEntry<K,V> current;     // current entry
         NodeEntry<K,V> next;
-        Deque<NodeEntry<K,V>> stack;
-        Deque<BTreeNode<K,V>> nodeStack;
-        BTreeIterator(NodeEntry<K,V> first) {
+        Deque<Object> stack;
+        BTreeIterator() {
             BTreeNode<K,V> t = root;
             current = null;
             stack = new ArrayDeque<>();
-            nodeStack = new ArrayDeque<>();
             if (t != null && size > 0) { // advance to first entry
-                stack.addAll(t.keys);
-                if (!t.isLeaf()){
-                    nodeStack.addAll(t.childes);
-                }
+                stack.push(t);
             }
         }
 
         public final boolean hasNext() {
-            return stack.isEmpty() && nodeStack.isEmpty();
+            return !stack.isEmpty();
         }
 
-        final Entry<K,V> nextNode() {
-            Entry<K,V> e = stack.pop();
-            if (e.getSlots() != null) {
-                for (Entry<K,V> entry : e.getSlots()){
-                    if (entry != null)
-                        stack.push(entry);
+        @SuppressWarnings("unchecked")
+        final NodeEntry<K,V> nextEntry() {
+            Object e = stack.pop();
+            if (e instanceof NodeEntry){
+                NodeEntry<K,V> entry = (NodeEntry<K, V>) e;
+                current = entry;
+            } else {
+                BTreeNode<K,V> node = (BTreeNode<K, V>) e;
+                while (!node.isLeaf()){
+                    for (int i = node.keys.size() - 1; i > -1; i--) {
+                        stack.push(node.childes.get(i+1));
+                        stack.push(node.keys.get(i));
+                    }
+                    node = node.childes.get(0);
                 }
+                for (int i = node.keys.size() - 1; i > -1; i--){
+                    stack.push(node.keys.get(i));
+                }
+                current = (NodeEntry<K, V>) stack.pop();
             }
-            return e;
-        }
-
-        final Entry<K,V> nextAliveNode() {
-            Entry<K,V> e = nextNode();
-            while (!e.alive()) {
-                e = nextNode();
-            }
-            current = e;
-            return e;
+            return current;
         }
 
         public final void remove() {
-            Entry<K,V> p = current;
+            NodeEntry<K,V> p = current;
             if (p == null)
                 throw new IllegalStateException();
             current = null;
             K key = p.key;
-            HashTreeMap.this.remove(key);
+            BTreeMap.this.remove(key);
         }
     }
 
     final class KeyIterator extends BTreeIterator
             implements Iterator<K> {
-        public final K next() { return nextAliveNode().key; }
+        public final K next() { return nextEntry().key; }
     }
 
     final class ValueIterator extends BTreeIterator
             implements Iterator<V> {
-        public final V next() { return nextAliveNode().value; }
+        public final V next() { return nextEntry().value; }
     }
 
     final class EntryIterator extends BTreeIterator
             implements Iterator<Map.Entry<K,V>> {
-        public final Map.Entry<K,V> next() { return nextAliveNode(); }
+        public final Map.Entry<K,V> next() { return nextEntry(); }
     }
 
 }
