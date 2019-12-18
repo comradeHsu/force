@@ -84,13 +84,13 @@ public class BTreeMapTest extends TestCase {
     public void testRemoves(){
         BTreeMap<Integer,Integer> map = new BTreeMap<>(3);
         Random random = new Random();
-        for (int i = 0; i < 300000; i++) {
-            int key = random.nextInt(1000000);
+        for (int i = 0; i < 30000; i++) {
+            int key = random.nextInt(10000);
             map.put(key,key);
         }
         parentEq(map);
-        for (int i = 0; i < 300000; i++) {
-            int key = random.nextInt(1000000);
+        for (int i = 0; i < 30000; i++) {
+            int key = random.nextInt(10000);
             map.remove(key);
             parentEq(map);
         }
@@ -135,6 +135,108 @@ public class BTreeMapTest extends TestCase {
         for (Map.Entry<Integer,Integer> entry : map.entrySet()){
             assertEquals(Integer.valueOf(array[index]),entry.getKey());
             index++;
+        }
+    }
+
+    public void testGet(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>();
+        map.put(3,3);
+        assertNull(map.get(10));
+        map.put(2,2);
+        map.put(4,4);
+        map.put(5,5);
+    }
+
+    public void testLowerEntry(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        for (int i = 0; i < ints.size(); i++) {
+            map.put(ints.get(i),ints.get(i));
+        }
+        assertEquals(null,map.lowerEntry(3));
+        assertEquals(Integer.valueOf(3),map.lowerEntry(5).getKey());
+        assertEquals(Integer.valueOf(12),map.lowerEntry(13).getKey());
+        assertEquals(Integer.valueOf(21),map.lowerEntry(27).getKey());
+        assertEquals(Integer.valueOf(27),map.lowerEntry(31).getKey());
+        assertEquals(Integer.valueOf(48),map.lowerEntry(188).getKey());
+    }
+
+    public void testFloorEntry(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        assertNull(map.floorEntry(2));
+        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        for (int i = 0; i < ints.size(); i++) {
+            map.put(ints.get(i),ints.get(i));
+        }
+        assertEquals(Integer.valueOf(3),map.floorEntry(3).getKey());
+        assertEquals(Integer.valueOf(5),map.floorEntry(5).getKey());
+        assertEquals(Integer.valueOf(12),map.floorEntry(13).getKey());
+        assertEquals(Integer.valueOf(27),map.floorEntry(27).getKey());
+        assertEquals(Integer.valueOf(27),map.floorEntry(31).getKey());
+        assertEquals(Integer.valueOf(48),map.floorEntry(188).getKey());
+        assertEquals(Integer.valueOf(21),map.floorEntry(21).getKey());
+    }
+
+    public void testHigherEntry(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        assertNull(map.higherEntry(2));
+        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        for (int i = 0; i < ints.size(); i++) {
+            map.put(ints.get(i),ints.get(i));
+        }
+        assertNull(map.higherEntry(48));
+        assertEquals(Integer.valueOf(7),map.higherEntry(5).getKey());
+        assertEquals(Integer.valueOf(14),map.higherEntry(13).getKey());
+        assertEquals(Integer.valueOf(34),map.higherEntry(27).getKey());
+        assertEquals(Integer.valueOf(34),map.higherEntry(31).getKey());
+        assertEquals(Integer.valueOf(3),map.higherEntry(1).getKey());
+        assertEquals(Integer.valueOf(27),map.higherEntry(21).getKey());
+    }
+
+    public void testCeilingEntry(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        assertNull(map.ceilingEntry(2));
+        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        for (int i = 0; i < ints.size(); i++) {
+            map.put(ints.get(i),ints.get(i));
+        }
+        assertNull(map.ceilingEntry(49));
+        assertEquals(Integer.valueOf(5),map.ceilingEntry(5).getKey());
+        assertEquals(Integer.valueOf(14),map.ceilingEntry(13).getKey());
+        assertEquals(Integer.valueOf(27),map.ceilingEntry(27).getKey());
+        assertEquals(Integer.valueOf(34),map.ceilingEntry(31).getKey());
+        assertEquals(Integer.valueOf(3),map.ceilingEntry(3).getKey());
+        assertEquals(Integer.valueOf(21),map.ceilingEntry(21).getKey());
+        assertEquals(Integer.valueOf(48),map.ceilingEntry(48).getKey());
+    }
+
+    public void testBatchEntry(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        for (int i = 0; i < 50; i++) {
+            map.put(i*2,i);
+        }
+        Random random = new Random();
+        for (int i = 0; i < 1000; i++) {
+            Integer key = random.nextInt(94)+2;
+            if (key >= 97) System.out.println(key);
+            if (key < 0) System.out.println(key);
+            try {
+                if ((key & 1) == 1) {
+                    assertEquals(Integer.valueOf(key + 1), map.ceilingEntry(key).getKey());
+                    assertEquals(Integer.valueOf(key + 1), map.higherEntry(key).getKey());
+                    assertEquals(Integer.valueOf(key - 1), map.lowerEntry(key).getKey());
+                    assertEquals(Integer.valueOf(key - 1), map.floorEntry(key).getKey());
+                } else {
+                    assertEquals(key, map.ceilingEntry(key).getKey());
+                    assertEquals(Integer.valueOf(key + 2), map.higherEntry(key).getKey());
+                    assertEquals(Integer.valueOf(key - 2), map.lowerEntry(key).getKey());
+                    assertEquals(key, map.floorEntry(key).getKey());
+                }
+            }catch (NullPointerException e){
+                e.printStackTrace();
+                System.out.println(key);
+            }
+
         }
     }
 
