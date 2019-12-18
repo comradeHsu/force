@@ -1,7 +1,5 @@
 package ds.force;
 
-import com.sun.istack.internal.NotNull;
-
 import java.util.AbstractSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -310,7 +308,7 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return value;
     }
 
-    final NodeEntry<K,V> getPrecursorEntry(@NotNull BTreeNode<K,V> precursorNode){
+    final NodeEntry<K,V> getPrecursorEntry(BTreeNode<K,V> precursorNode){
         NodeEntry<K,V> target = null;
         while (precursorNode != null){
             for (int i = 0; i < precursorNode.keys.size(); i++) {
@@ -324,7 +322,7 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return target;
     }
 
-    final NodeEntry<K,V> getSuccessorEntry(@NotNull BTreeNode<K,V> successorNode){
+    final NodeEntry<K,V> getSuccessorEntry(BTreeNode<K,V> successorNode){
         NodeEntry<K,V> target = null;
         while (successorNode != null){
             target = successorNode.keys.get(0);
@@ -559,12 +557,16 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public Entry<K, V> pollFirstEntry() {
-        return null;
+        NodeEntry<K,V> entry = firstEntry();
+        if (entry != null) remove(entry.key);
+        return entry;
     }
 
     @Override
     public Entry<K, V> pollLastEntry() {
-        return null;
+        NodeEntry<K,V> entry = lastEntry();
+        if (entry != null) remove(entry.key);
+        return entry;
     }
 
     @Override

@@ -84,13 +84,13 @@ public class BTreeMapTest extends TestCase {
     public void testRemoves(){
         BTreeMap<Integer,Integer> map = new BTreeMap<>(3);
         Random random = new Random();
-        for (int i = 0; i < 30000; i++) {
-            int key = random.nextInt(10000);
+        for (int i = 0; i < 3000; i++) {
+            int key = random.nextInt(1000);
             map.put(key,key);
         }
         parentEq(map);
         for (int i = 0; i < 30000; i++) {
-            int key = random.nextInt(10000);
+            int key = random.nextInt(1000);
             map.remove(key);
             parentEq(map);
         }
