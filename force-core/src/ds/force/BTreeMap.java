@@ -65,16 +65,38 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         this.root = new BTreeNode<>(degree,null);
     }
 
+    /**
+     * Returns the number of key-value mappings in this map.
+     *
+     * @return the number of key-value mappings in this map
+     */
     @Override
     public int size() {
         return size;
     }
 
+    /**
+     * Returns {@code true} if this map has least a mapping entry
+     * @return {@code true or false}
+     */
     @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
+    /**
+     * Returns {@code true} if this map contains a mapping for the specified
+     * key.
+     *
+     * @param key key whose presence in this map is to be tested
+     * @return {@code true} if this map contains a mapping for the
+     *         specified key
+     * @throws ClassCastException if the specified key cannot be compared
+     *         with the keys currently in the map
+     * @throws NullPointerException if the specified key is null
+     *         and this map uses natural ordering, or its comparator
+     *         does not permit null keys
+     */
     @Override
     @SuppressWarnings("unchecked")
     public boolean containsKey(Object key) {
@@ -84,6 +106,18 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return target != null;
     }
 
+    /**
+     * Returns {@code true} if this map maps one or more keys to the
+     * specified value.  More formally, returns {@code true} if and only if
+     * this map contains at least one mapping to a value {@code v} such
+     * that {@code (value==null ? v==null : value.equals(v))}.  This
+     * operation will probably require time linear in the map size for
+     * most implementations.
+     *
+     * @param value value whose presence in this map is to be tested
+     * @return {@code true} if a mapping to {@code value} exists;
+     *         {@code false} otherwise
+     */
     @Override
     public boolean containsValue(Object value) {
         for (Entry<K,V> e : entrySet())
@@ -92,6 +126,16 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return false;
     }
 
+    /**
+     * Returns the value to which the specified key is mapped,
+     * or {@code null} if this map contains no mapping for the key.
+     *
+     * @throws ClassCastException if the specified key cannot be compared
+     *         with the keys currently in the map
+     * @throws NullPointerException if the specified key is null
+     *         and this map uses natural ordering, or its comparator
+     *         does not permit null keys
+     */
     @Override
     @SuppressWarnings("unchecked")
     public V get(Object key) {
@@ -140,6 +184,24 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return null;
     }
 
+    /**
+     * Associates the specified value with the specified key in this map.
+     * If the map previously contained a mapping for the key, the old
+     * value is replaced.
+     *
+     * @param key key with which the specified value is to be associated
+     * @param value value to be associated with the specified key
+     *
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
+     *         (A {@code null} return can also indicate that the map
+     *         previously associated {@code null} with {@code key}.)
+     * @throws ClassCastException if the specified key cannot be compared
+     *         with the keys currently in the map
+     * @throws NullPointerException if the specified key is null
+     *         and this map uses natural ordering, or its comparator
+     *         does not permit null keys
+     */
     @Override
     @SuppressWarnings("unchecked")
     public V put(K key, V value) {
@@ -148,6 +210,7 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
        return putUsingFunction(key, value, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
     }
 
+    // see put
     private V putUsingFunction(K key, V value, final ToIntBiFunction<K,K> compare){
         BTreeNode<K,V> node = this.root, preNode = this.root;
         int index = 0;
@@ -205,6 +268,12 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         return insertIndex;
     }
 
+    /**
+     * when the BTreeNode's keys only t-1, if we want delete entry in this node or child's
+     * node, we should merge the key's two child's node
+     * @param node the current BTreeNode
+     * @param keyPoint the key's index for will be merge
+     */
     final void merge(BTreeNode<K,V> node,int keyPoint){
         NodeEntry<K,V> k = node.keys.get(keyPoint);
         BTreeNode<K,V> left = node.childes.get(keyPoint);
@@ -224,6 +293,20 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         }
     }
 
+    /**
+     * Removes the mapping for this key from this TreeMap if present.
+     *
+     * @param  key key for which mapping should be removed
+     * @return the previous value associated with {@code key}, or
+     *         {@code null} if there was no mapping for {@code key}.
+     *         (A {@code null} return can also indicate that the map
+     *         previously associated {@code null} with {@code key}.)
+     * @throws ClassCastException if the specified key cannot be compared
+     *         with the keys currently in the map
+     * @throws NullPointerException if the specified key is null
+     *         and this map uses natural ordering, or its comparator
+     *         does not permit null keys
+     */
     @Override
     public V remove(Object key) {
         if (comparator != null)
@@ -263,7 +346,7 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         }
         return node;
     }
-
+    // see remove
     private V remove(Object key, final ToIntBiFunction<K,K> compare) {
         BTreeNode<K,V> target = null, replaceNode = null;
         K k = (K) key;

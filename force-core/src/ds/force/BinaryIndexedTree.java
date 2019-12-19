@@ -113,17 +113,32 @@ public class BinaryIndexedTree<E> {
                 MAX_ARRAY_SIZE;
     }
 
-    int lowBit(int index){
+    /**
+     * important function
+     * @param index index in array
+     * @return the position of the first 1 in a binary representation
+     */
+    final int lowBit(int index){
         int sequence = index + 1;
         return sequence & (-sequence);
     }
 
+    /**
+     * return the raw data by index
+     * @param index index in array
+     * @return raw data
+     */
     @SuppressWarnings("unchecked")
     public E get(int index){
         rangeCheckForInsert(index);
         return (E) dataTable[index];
     }
 
+    /**
+     * replace old value for index of array to new value
+     * @param index index in array
+     * @param value new value
+     */
     @SuppressWarnings("unchecked")
     public void set(int index, E value){
         E oldValue = (E) dataTable[index];
@@ -135,6 +150,11 @@ public class BinaryIndexedTree<E> {
         }
     }
 
+    /**
+     * add value into index of array
+     * @param index index in array
+     * @param value add's value
+     */
     @SuppressWarnings("unchecked")
     public void add(int index, E value){
         dataTable[index] = plusFunction.apply((E) dataTable[index],value);
@@ -144,6 +164,11 @@ public class BinaryIndexedTree<E> {
         }
     }
 
+    /**
+     * append a value to data array
+     * @param value
+     * @return
+     */
     public boolean insert(E value){
         ensureCapacityInternal(size + 1);
         dataTable[size] = value;
@@ -182,6 +207,11 @@ public class BinaryIndexedTree<E> {
         return "Index: "+index+", Size: "+size;
     }
 
+    /**
+     * inserts a data in the specified position of the array
+     * @param index
+     * @param value
+     */
     @SuppressWarnings("unchecked")
     public void insert(int index, E value){
         rangeCheckForInsert(index);
@@ -199,6 +229,12 @@ public class BinaryIndexedTree<E> {
         }
     }
 
+    /**
+     * delete data at specified location
+     * @param index index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return old value
+     */
     @SuppressWarnings("unchecked")
     public E remove(int index){
         rangeCheck(index);
@@ -219,6 +255,12 @@ public class BinaryIndexedTree<E> {
         return oldValue;
     }
 
+    /**
+     * return the sum of interval from 0 to index
+     * @param index the end's index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return sum
+     */
     @SuppressWarnings("unchecked")
     public E getSum(int index){
         E sum = null;
@@ -230,6 +272,13 @@ public class BinaryIndexedTree<E> {
         return sum;
     }
 
+    /**
+     * return the sum of interval from start to end
+     * @param start the start's index
+     * @param end the end's index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return the sum
+     */
     @SuppressWarnings("unchecked")
     public E getIntervalSum(int start, int end){
         E sum = null;
@@ -246,6 +295,10 @@ public class BinaryIndexedTree<E> {
         return subFunction.apply(sum,redundant);
     }
 
+    /**
+     * return the array's size
+     * @return
+     */
     public int size(){
         return size;
     }

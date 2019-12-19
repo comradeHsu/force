@@ -1,5 +1,9 @@
 package ds.force.trie;
 
+/**
+ * @author comradeHsu
+ * @serial
+ */
 public interface Trie {
 
     boolean find(String s);
