@@ -3,18 +3,18 @@ package ds.force;
 import junit.framework.TestCase;
 
 import java.math.BigDecimal;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 public class BinaryIndexedTreeTest extends TestCase {
 
-    private BiFunction<Integer,Integer,Integer> plus = (integer, integer2) -> {
+    private BinaryOperator<Integer> plus = (integer, integer2) -> {
         if (integer == null) return integer2;
         if (integer2 == null) return integer;
         return integer + integer2;
     };
 
-    private BiFunction<Integer,Integer,Integer> sub =  (integer, integer2) -> {
+    private BinaryOperator<Integer> sub =  (integer, integer2) -> {
         if (integer == null) return -integer2;
         if (integer2 == null) return integer;
         return integer - integer2;

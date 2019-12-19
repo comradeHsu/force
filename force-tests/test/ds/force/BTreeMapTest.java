@@ -3,8 +3,14 @@ package ds.force;
 import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.TreeMap;
 
 public class BTreeMapTest extends TestCase {
 
@@ -118,7 +124,6 @@ public class BTreeMapTest extends TestCase {
         for (int i = 0; i < 30; i++) {
             int key = random.nextInt(1000);
             map.remove(key);
-            System.out.println(key);
             parentEq(map);
         }
     }
@@ -265,6 +270,24 @@ public class BTreeMapTest extends TestCase {
     public void testExtendFunc(){
         BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
         assertEquals(Integer.valueOf(1),map.getOrDefault(5,1));
+    }
+
+    public void testWithTreeMap(){
+        NavigableMap<Integer,Integer> map = new BTreeMap<>(2);
+        NavigableMap<Integer,Integer> treeMap = new TreeMap<>();
+        Random random = new Random();
+        for (int i = 0; i < 10000; i++) {
+            Integer key = random.nextInt(10000);
+            map.put(key,key);
+            treeMap.put(key,key);
+        }
+        for (int i = 0; i < 50000; i++) {
+            Integer key = random.nextInt(10000);
+            assertEquals(map.floorKey(key),treeMap.floorKey(key));
+            assertEquals(map.higherKey(key),treeMap.higherKey(key));
+            assertEquals(map.lowerKey(key),treeMap.lowerKey(key));
+            assertEquals(map.ceilingKey(key),treeMap.ceilingKey(key));
+        }
     }
 
     public void parentEq(BTreeMap map){

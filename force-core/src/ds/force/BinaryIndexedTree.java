@@ -1,7 +1,7 @@
 package ds.force;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 
 public class BinaryIndexedTree<E> {
 
@@ -23,9 +23,9 @@ public class BinaryIndexedTree<E> {
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    final transient BiFunction<E,E,E> plusFunction;
+    final transient BinaryOperator<E> plusFunction;
 
-    final transient BiFunction<E,E,E> subFunction;
+    final transient BinaryOperator<E> subFunction;
 
     transient Object[] dataTable;
 
@@ -33,11 +33,11 @@ public class BinaryIndexedTree<E> {
 
     private int size;
 
-    public BinaryIndexedTree(BiFunction<E,E,E> plusFunction,BiFunction<E,E,E> subFunction){
+    public BinaryIndexedTree(BinaryOperator<E> plusFunction,BinaryOperator<E> subFunction){
         this(DEFAULT_CAPACITY,plusFunction,subFunction);
     }
 
-    public BinaryIndexedTree(int initCapacity,BiFunction<E,E,E> plusFunction,BiFunction<E,E,E> subFunction){
+    public BinaryIndexedTree(int initCapacity,BinaryOperator<E> plusFunction,BinaryOperator<E> subFunction){
         if (initCapacity > 0) {
             this.dataTable = new Object[initCapacity];
             this.treeArray = new Object[initCapacity];
@@ -57,7 +57,7 @@ public class BinaryIndexedTree<E> {
      * @param array
      */
     @SuppressWarnings("unchecked")
-    public BinaryIndexedTree(Object[] array,BiFunction<E,E,E> biFunction,BiFunction<E,E,E> subFunction){
+    public BinaryIndexedTree(Object[] array,BinaryOperator<E> biFunction,BinaryOperator<E> subFunction){
         this.dataTable = array;
         this.size = array.length;
         this.treeArray = new Object[size];

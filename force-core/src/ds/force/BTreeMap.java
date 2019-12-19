@@ -1,31 +1,11 @@
 package ds.force;
 
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.Spliterator;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntPredicate;
 import java.util.function.ToIntBiFunction;
 
-public class BTreeMap<K,V> implements NavigableMap<K,V> {
+public class BTreeMap<K,V> implements NavigableMap<K,V>, Cloneable, java.io.Serializable {
     /**
      * default minmum degree
      */
@@ -137,35 +117,20 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
      *         does not permit null keys
      */
     @Override
-    @SuppressWarnings("unchecked")
     public V get(Object key) {
         Entry<K,V> target;
+        @SuppressWarnings("unchecked")
         K k = (K) key;
         target = getEntry(k);
         return target == null ? null : target.getValue();
     }
 
+    @SuppressWarnings("unchecked")
     private NodeEntry<K,V> getEntry(K key){
         if (comparator != null)
             return getEntry(key,comparator::compare);
         else
             return getEntry(key,(k1, k2) -> ((Comparable<? super K>)k1).compareTo(k2));
-    }
-
-    private BTreeNode<K,V> getNode(K key,final ToIntBiFunction<K,K> compare){
-        BTreeNode<K,V> node = this.root;
-        do {
-            int index = 0;
-            for (int i = index; i < node.keys.size(); i++) {
-                if (node.keys.get(i) == null) break;
-                int cmp = compare.applyAsInt(key, node.keys.get(i).key);
-                if (cmp < 0) break;
-                else if (cmp > 0) index++;
-                else return node;
-            }
-            node = node.childes.get(index);
-        } while (!node.isLeaf());
-        return null;
     }
 
     private NodeEntry<K,V> getEntry(K key,final ToIntBiFunction<K,K> compare){
@@ -346,6 +311,27 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         }
         return node;
     }
+
+    /**
+     * When deleting the entry, the target entry is found in the node.
+     * At this time, we select the next node to traverse
+     * @param node target entry's node
+     * @param index the key's index
+     * @param least degree-1
+     * @return the next node to traverse
+     */
+    private BTreeNode<K,V> selectNextNode(BTreeNode<K,V> node, int index,int least){
+        BTreeNode<K,V> preNode = null, nextNode = null;
+        if ((preNode = node.childes.get(index)).keys.size() > least){
+            node = preNode;
+        } else if ((nextNode = node.childes.get(index+1)).keys.size() > least){
+            node = nextNode;
+        } else {
+            merge(node,index);
+            node = node.childes.get(index);
+        }
+        return node;
+    }
     // see remove
     private V remove(Object key, final ToIntBiFunction<K,K> compare) {
         BTreeNode<K,V> target = null, replaceNode = null;
@@ -370,16 +356,8 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
                     target = node;
                     value = entry.value;
                     keyPoint = i;
-                    BTreeNode<K,V> preNode = null, nextNode = null;
                     if (target.isLeaf()) break loop;
-                    if ((preNode = node.childes.get(i)).keys.size() > least){
-                        node = preNode;
-                    } else if ((nextNode = target.childes.get(i+1)).keys.size() > least){
-                        node = nextNode;
-                    } else {
-                        merge(node,i);
-                        node = node.childes.get(i);
-                    }
+                    node = selectNextNode(node,i,least);
                     continue loop;
                 }
             }
@@ -389,14 +367,13 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         if (target != null){
             if (target.isLeaf()){
                 target.keys.remove(keyPoint);
-                size--;
             } else {
                 int replaceIndex = compare.applyAsInt(replaceNode.keys.get(0).key, target.keys.get(keyPoint).key) > 0 ?
                         0 : replaceNode.keys.size()-1;
                 target.keys.set(keyPoint,replaceNode.keys.get(replaceIndex));
                 replaceNode.keys.remove(replaceIndex);
-                size--;
             }
+            size--;
         }
         return value;
     }
@@ -767,14 +744,6 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
         }
     }
 
-    int nodePoint(BTreeNode<K,V> node){
-        List<BTreeNode<K,V>> childes = node.parent.childes;
-        for (int i = 0; i < childes.size(); i++) {
-            if (childes.get(i) == node) return i;
-        }
-        return -1;
-    }
-
     int keyPoint(BTreeNode<K,V> node, K key){
         if (comparator != null)
             return keyPointUsingComparator(node,key, cmp -> cmp <= 0);
@@ -838,29 +807,6 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
             this.value = value;
             return oldValue;
         }
-    }
-
-    private NodeEntry<K,V> getEntry(BTreeNode<K,V> node,K key){
-        if (comparator != null) return getEntryUsingComparator(node,key);
-        return getEntryComparable(node,key);
-    }
-
-    private NodeEntry<K,V> getEntryComparable(BTreeNode<K,V> node,K key){
-        @SuppressWarnings("unchecked")
-        Comparable<? super K> k = (Comparable<? super K>) key;
-        for (int i = 0; i < node.keys.size(); i++) {
-            if (key == node.keys.get(i).key || k.compareTo(node.keys.get(i).key) == 0)
-                return node.keys.get(i);
-        }
-        return null;
-    }
-
-    private NodeEntry<K,V> getEntryUsingComparator(BTreeNode<K,V> node,K key){
-        for (int i = 0; i < node.keys.size(); i++) {
-            if (key == node.keys.get(i).key || comparator.compare(node.keys.get(i).key,key) == 0)
-                return node.keys.get(i);
-        }
-        return null;
     }
 
     protected static class BTreeNode<K,V> {
@@ -1021,7 +967,6 @@ public class BTreeMap<K,V> implements NavigableMap<K,V> {
 
     abstract class BTreeIterator {
         NodeEntry<K,V> current;     // current entry
-        NodeEntry<K,V> next;
         Deque<Object> stack;
         BTreeIterator() {
             BTreeNode<K,V> t = root;
