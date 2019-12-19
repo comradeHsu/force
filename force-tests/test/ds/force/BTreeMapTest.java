@@ -240,13 +240,40 @@ public class BTreeMapTest extends TestCase {
         }
     }
 
+    public void testDescendingMap(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        for (int i = 0; i < ints.size(); i++) {
+            map.put(ints.get(i),ints.get(i));
+        }
+        NavigableMap<Integer,Integer> des = map.descendingMap();
+        Iterator<Map.Entry<Integer,Integer>> iterable = des.entrySet().iterator();
+        while (iterable.hasNext()){
+            Map.Entry<Integer,Integer> entry = iterable.next();
+            if (entry.getKey() == 3 || entry.getKey() == 48 || entry.getKey() == 34) iterable.remove();
+        }
+        assertFalse(des.containsKey(3));
+        assertFalse(des.containsKey(34));
+        assertFalse(des.containsKey(48));
+        Iterator<Map.Entry<Integer,Integer>> iter = des.entrySet().iterator();
+        while (iter.hasNext()){
+            Map.Entry<Integer,Integer> entry = iter.next();
+            iter.remove();
+        }
+    }
+
+    public void testExtendFunc(){
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+        assertEquals(Integer.valueOf(1),map.getOrDefault(5,1));
+    }
+
     public void parentEq(BTreeMap map){
         Deque<BTreeMap.BTreeNode> stack = new ArrayDeque<>();
         stack.push(map.root);
         while (!stack.isEmpty()){
             BTreeMap.BTreeNode node = stack.pop();
-            List<BTreeMap.BTreeNode> childs = node.childes;
-            for (BTreeMap.BTreeNode treeNode: childs) {
+            List<BTreeMap.BTreeNode> childes = node.childes;
+            for (BTreeMap.BTreeNode treeNode: childes) {
                 assert treeNode.parent == node;
                 stack.push(treeNode);
             }
