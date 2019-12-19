@@ -1,6 +1,6 @@
 package ds.force.common;
 
-import ds.force.IntArrayList;
+import ds.force.primitive.IntArrayList;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;

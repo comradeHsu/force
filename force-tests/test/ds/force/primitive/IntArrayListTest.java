@@ -1,28 +1,13 @@
-package ds.force;
+package ds.force.primitive;
 
-import ds.force.common.IntArrayListBenchmark;
-import ds.force.trie.TrieTest;
+import ds.force.primitive.IntArrayList;
 import junit.framework.TestCase;
-import sun.misc.Unsafe;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class IntArrayListTest extends TestCase {
-
-    private final static Unsafe UNSAFE;
-    // 只能通过反射获取Unsafe对象的实例
-    static {
-        try {
-            Field getUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-            getUnsafe.setAccessible(true);
-            UNSAFE = (Unsafe) getUnsafe.get(null);
-        } catch (Exception e) {
-            throw new Error();
-        }
-    }
 
     public void testAdd(){
         IntArrayList list = new IntArrayList();
@@ -32,6 +17,7 @@ public class IntArrayListTest extends TestCase {
         assertEquals(2,list.get(1));
         list.add(3);
         assertEquals(3,list.get(2));
+        System.out.println(Long.MAX_VALUE);
     }
 
     public void testRemove(){
@@ -116,10 +102,13 @@ public class IntArrayListTest extends TestCase {
         for (int i = 0; i < 10000; i++){
             arrayList.add(i);
         }
-        Field[] fields = TrieTest.class.getDeclaredFields();
-        for (Field field : fields) {
-            if (Modifier.isStatic(field.getModifiers())) continue;
-            System.out.println(field.getName() + "---offSet:" + UNSAFE.objectFieldOffset(field));
-        }
+    }
+
+    public void testStream() {
+        IntArrayList list = IntArrayList.of(1,2,3,4,5,6,7,8,9,10);
+        IntStream stream = list.stream();
+        stream.forEach(System.out::println);
+        IntStream streamm = list.parallelStream();
+        streamm.forEach(System.out::println);
     }
 }
