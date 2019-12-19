@@ -2,9 +2,7 @@ package ds.force.trie;
 
 import ds.force.primitive.CharObjectMap;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
+import java.util.*;
 
 public class PrefixTree implements Trie {
 
@@ -28,7 +26,6 @@ public class PrefixTree implements Trie {
         private CharObjectMap<TrieNode> childes;
 
         private boolean isEnd;
-
 
         TrieNode() {
             childes = new CharObjectMap<>();
@@ -116,7 +113,20 @@ public class PrefixTree implements Trie {
         this.root = new TrieNode();
     }
 
-    public TrieNode search(String prefix){
+    public List<String> search(String prefix){
+        TrieNode node = searchNode(prefix);
+        if (node == null) return Collections.emptyList();
+        List<String> result = new ArrayList<>();
+        Deque<TrieNode> stack = new ArrayDeque<>();
+        stack.push(node);
+        while (!stack.isEmpty()){
+            TrieNode child = stack.pop();
+            //todo
+        }
+        return null;
+    }
+
+    final TrieNode searchNode(String prefix){
         char[] chars = prefix.toCharArray();
         TrieNode node = this.root;
         for (int i = 0; i < chars.length; i++) {

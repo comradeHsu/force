@@ -1,4 +1,4 @@
-package ds.force.treap;
+package ds.force.binarytree.treap;
 
 import java.util.AbstractCollection;
 import java.util.AbstractMap;

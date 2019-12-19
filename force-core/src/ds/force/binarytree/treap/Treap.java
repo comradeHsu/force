@@ -1,4 +1,4 @@
-package ds.force.treap;
+package ds.force.binarytree.treap;
 
 public interface Treap<E> {
 
