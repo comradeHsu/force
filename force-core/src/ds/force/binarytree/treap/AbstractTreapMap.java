@@ -1,7 +1,8 @@
 package ds.force.binarytree.treap;
 
+import ds.force.AbstractNavigableMap;
+
 import java.util.AbstractCollection;
-import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -11,7 +12,7 @@ import java.util.NavigableSet;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 
-public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements Map<K,V> {
+public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
 
     /**
      * Returns the first Entry in the TreeMap (according to the TreeMap's
@@ -47,12 +48,6 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
 
     protected abstract AbstractEntry<K,V> getRoot();
 
-    protected abstract AbstractEntry<K,V> successor(AbstractEntry<K,V> entry);
-
-    protected abstract AbstractEntry<K,V> predecessor(AbstractEntry<K,V> entry);
-
-    protected abstract AbstractEntry<K,V> getEntry(Object key);
-
     private void deleteEntry(Map.Entry<K,V> entry){
         remove(entry.getKey());
     }
@@ -65,10 +60,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
         return (o1==null ? o2==null : o1.equals(o2));
     }
 
-    static abstract class AbstractEntry<K,V> implements Map.Entry<K,V> {
-        K key;
-
-        V value;
+    static abstract class AbstractEntry<K,V> extends AbstractNavigableMap.NavigableEntry<K,V> {
 
         int priority;
 
@@ -112,7 +104,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
         }
 
         public boolean remove(Object o) {
-            for (AbstractEntry<K,V> e = getFirstEntry(); e != null; e = successor(e)) {
+            for (NavigableEntry<K,V> e = getFirstEntry(); e != null; e = successor(e)) {
                 if (valEquals(e.getValue(), o)) {
                     deleteEntry(e);
                     return true;
@@ -136,7 +128,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
             Object value = entry.getValue();
-            Map.Entry<K,V> p = getEntry(entry.getKey());
+            Map.Entry<K,V> p = getEntry((K) entry.getKey());
             return p != null && valEquals(p.getValue(), value);
         }
 
@@ -145,7 +137,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
             Object value = entry.getValue();
-            Map.Entry<K,V> p = getEntry(entry.getKey());
+            Map.Entry<K,V> p = getEntry((K) entry.getKey());
             if (p != null && valEquals(p.getValue(), value)) {
                 deleteEntry(p);
                 return true;
@@ -252,7 +244,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
             AbstractEntry<K,V> e = next;
             if (e == null)
                 throw new NoSuchElementException();
-            next = successor(e);
+            next = (AbstractEntry<K, V>) successor(e);
             lastReturned = e;
             return e;
         }
@@ -261,7 +253,7 @@ public abstract class AbstractTreapMap<K,V> extends AbstractMap<K,V> implements 
             AbstractEntry<K,V> e = next;
             if (e == null)
                 throw new NoSuchElementException();
-            next = predecessor(e);
+            next = (AbstractEntry<K, V>) predecessor(e);
             lastReturned = e;
             return e;
         }
