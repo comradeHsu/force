@@ -36,6 +36,12 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
         this.comparator = comparator;
     }
 
+    @SuppressWarnings("unchecked")
+    protected ToIntBiFunction<K,K> toIntBiFunction(){
+        if (comparator != null) return comparator::compare;
+        return (k1,k2) -> ((Comparable<? super K>)k1).compareTo(k2);
+    }
+
     protected abstract NavigableEntry<K,V> getEntry(K key);
 
     protected abstract NavigableEntry<K,V> successor(NavigableEntry<K, V> entry);
@@ -47,14 +53,14 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
      * key; if no such entry exists (i.e., the greatest key in the Tree is less
      * than the specified key), returns {@code null}.
      */
-    protected abstract NavigableEntry<K,V> getCeilingEntry(K key, ToIntBiFunction<K,K> compare);
+    protected abstract NavigableEntry<K,V> getCeilingEntry(K key);
 
     /**
      * Gets the entry corresponding to the specified key; if no such entry
      * exists, returns the entry for the greatest key less than the specified
      * key; if no such entry exists, returns {@code null}.
      */
-    protected abstract NavigableEntry<K,V> getFloorEntry(K key, ToIntBiFunction<K,K> compare);
+    protected abstract NavigableEntry<K,V> getFloorEntry(K key);
 
     /**
      * Gets the entry for the least key greater than the specified
@@ -62,14 +68,14 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
      * key greater than the specified key; if no such entry exists
      * returns {@code null}.
      */
-    protected abstract NavigableEntry<K,V> getHigherEntry(K key, ToIntBiFunction<K,K> compare);
+    protected abstract NavigableEntry<K,V> getHigherEntry(K key);
 
     /**
      * Returns the entry for the greatest key less than the specified key; if
      * no such entry exists (i.e., the least key in the Tree is greater than
      * the specified key), returns {@code null}.
      */
-    protected abstract NavigableEntry<K,V> getLowerEntry(K key, ToIntBiFunction<K,K> compare);
+    protected abstract NavigableEntry<K,V> getLowerEntry(K key);
 
     protected abstract static class NavigableEntry<K,V> implements Map.Entry<K,V> {
 
@@ -97,10 +103,15 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
 
 
     @Override
+    public void putAll(Map<? extends K, ? extends V> map) {
+        for(Entry<? extends K, ? extends V> entry : map.entrySet()){
+            put(entry.getKey(),entry.getValue());
+        }
+    }
+
+    @Override
     public NavigableEntry<K, V> lowerEntry(K key) {
-        if (comparator != null)
-            return getLowerEntry(key,comparator::compare);
-        return getLowerEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
+        return getLowerEntry(key);
     }
 
     @Override
@@ -111,9 +122,7 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public NavigableEntry<K, V> floorEntry(K key) {
-        if (comparator != null)
-            return getFloorEntry(key,comparator::compare);
-        return getFloorEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
+        return getFloorEntry(key);
     }
 
     @Override
@@ -124,9 +133,7 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public NavigableEntry<K, V> ceilingEntry(K key) {
-        if (comparator != null)
-            return getCeilingEntry(key,comparator::compare);
-        return getCeilingEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
+        return getCeilingEntry(key);
     }
 
     @Override
@@ -137,9 +144,7 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
 
     @Override
     public NavigableEntry<K, V> higherEntry(K key) {
-        if (comparator != null)
-            return getHigherEntry(key,comparator::compare);
-        return getHigherEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
+        return getHigherEntry(key);
     }
 
     @Override

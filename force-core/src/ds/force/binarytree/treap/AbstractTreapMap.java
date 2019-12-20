@@ -14,6 +14,14 @@ import java.util.SortedSet;
 
 public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
 
+    public AbstractTreapMap(){
+        super();
+    }
+
+    public AbstractTreapMap(Comparator<? super K> comparator){
+        super(comparator);
+    }
+
     /**
      * Returns the first Entry in the TreeMap (according to the TreeMap's
      * key-sort function).  Returns null if the TreeMap is empty.

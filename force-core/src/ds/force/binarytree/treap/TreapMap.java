@@ -11,31 +11,24 @@ import java.util.function.ToIntBiFunction;
 
 public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
 
-    /**
-     * The comparator used to maintain order in this tree map, or
-     * null if it uses the natural ordering of its keys.
-     *
-     * @serial
-     */
-    private final Comparator<? super K> comparator;
-
     transient Random random;
 
     transient Entry<K,V> root;
 
     public TreapMap(){
-        this.comparator = null;
+        super();
         this.random = new Random();
     }
 
     public TreapMap(Comparator<? super K> comparator) {
-        this.comparator = comparator;
+        super(comparator);
         this.random = new Random();
     }
 
     @Override
-    protected NavigableEntry<K, V> getCeilingEntry(K key, ToIntBiFunction<K, K> compare) {
+    protected NavigableEntry<K, V> getCeilingEntry(K key) {
         AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (p != null) {
             int cmp = compare.applyAsInt(key, p.key);
             if (cmp < 0) {
@@ -62,8 +55,9 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     }
 
     @Override
-    protected NavigableEntry<K, V> getFloorEntry(K key, ToIntBiFunction<K, K> compare) {
+    protected NavigableEntry<K, V> getFloorEntry(K key) {
         AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (p != null) {
             int cmp = compare.applyAsInt(key, p.key);
             if (cmp > 0) {
@@ -91,8 +85,9 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     }
 
     @Override
-    protected NavigableEntry<K, V> getHigherEntry(K key, ToIntBiFunction<K, K> compare) {
+    protected NavigableEntry<K, V> getHigherEntry(K key) {
         AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (p != null) {
             int cmp = compare.applyAsInt(key, p.key);
             if (cmp < 0) {
@@ -118,8 +113,9 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     }
 
     @Override
-    protected NavigableEntry<K, V> getLowerEntry(K key, ToIntBiFunction<K, K> compare) {
+    protected NavigableEntry<K, V> getLowerEntry(K key) {
         AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (p != null) {
             int cmp = compare.applyAsInt(key, p.key);
             if (cmp > 0) {
@@ -377,11 +373,6 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
         return node.getValue();
     }
 
-    @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-
-    }
-
     private void shiftUp(Entry<K,V> node) {
         while(node != root){
             Entry<K,V> parent = node.parent;
@@ -446,15 +437,11 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
      * there's no reason to create more than one.
      */
     private transient EntrySet entrySet;
-    private transient KeySet<K> navigableKeySet;
-    private transient NavigableMap<K,V> descendingMap;
 
     @Override
     public Set<K> keySet() {
         return navigableKeySet();
     }
-
-    transient Collection<V> values;
 
     @Override
     public Collection<V> values() {
@@ -470,39 +457,6 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     public Set<Map.Entry<K, V>> entrySet() {
         EntrySet es = entrySet;
         return (es != null) ? es : (entrySet = new EntrySet());
-    }
-
-    @Override
-    public AbstractEntry<K, V> lowerEntry(K key) {
-        return predecessor(key,compare -> compare >= 0);
-    }
-
-    @Override
-    public K lowerKey(K key) {
-        AbstractEntry<K,V> entry = lowerEntry(key);
-        return entry == null ? null : entry.key;
-    }
-
-    @Override
-    public AbstractEntry<K, V> floorEntry(K key) {
-        return predecessor(key,compare -> compare > 0);
-    }
-
-    @Override
-    public K floorKey(K key) {
-        AbstractEntry<K,V> entry = floorEntry(key);
-        return entry == null ? null : entry.key;
-    }
-
-    @Override
-    public AbstractEntry<K, V> ceilingEntry(K key) {
-        return successor(key,compare -> compare < 0);
-    }
-
-    @Override
-    public K ceilingKey(K key) {
-        AbstractEntry<K,V> entry = ceilingEntry(key);
-        return entry == null ? null : entry.key;
     }
 
     @Override

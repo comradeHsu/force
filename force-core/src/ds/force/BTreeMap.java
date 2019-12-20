@@ -285,20 +285,13 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
     }
 
     @Override
-    protected final NodeEntry<K,V> predecessor(NavigableEntry<K,V> entry){
+    protected final NavigableEntry<K,V> predecessor(NavigableEntry<K,V> entry){
         return lowerEntry(entry.getKey());
     }
 
     @Override
-    protected final NodeEntry<K,V> successor(NavigableEntry<K, V> entry){
+    protected final NavigableEntry<K,V> successor(NavigableEntry<K, V> entry){
         return higherEntry(entry.getKey());
-    }
-
-    @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-        for(Entry<? extends K, ? extends V> entry : m.entrySet()){
-            put(entry.getKey(),entry.getValue());
-        }
     }
 
     @Override
@@ -335,8 +328,9 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
      * key; if no such entry exists (i.e., the greatest key in the Tree is less
      * than the specified key), returns {@code null}.
      */
-    protected final NodeEntry<K,V> getCeilingEntry(K key,ToIntBiFunction<K,K> compare) {
+    protected final NodeEntry<K,V> getCeilingEntry(K key) {
         BTreeNode<K,V> node = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (!node.isLeaf()) {
             int index = 0;
             for (int i = index; i < node.keys.size(); i++) {
@@ -362,8 +356,9 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
      * exists, returns the entry for the greatest key less than the specified
      * key; if no such entry exists, returns {@code null}.
      */
-    protected final NodeEntry<K,V> getFloorEntry(K key, ToIntBiFunction<K, K> compare) {
+    protected final NodeEntry<K,V> getFloorEntry(K key) {
         BTreeNode<K,V> node = root, preNode = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (node != null) {
             int index = 0;
             for (int i = index; i < node.keys.size(); i++) {
@@ -392,8 +387,9 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
      * key greater than the specified key; if no such entry exists
      * returns {@code null}.
      */
-    protected final NodeEntry<K,V> getHigherEntry(K key,ToIntBiFunction<K,K> compare) {
+    protected final NodeEntry<K,V> getHigherEntry(K key) {
         BTreeNode<K,V> node = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (!node.isLeaf()) {
             int index = 0;
             for (int i = index; i < node.keys.size(); i++) {
@@ -419,8 +415,9 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
      * no such entry exists (i.e., the least key in the Tree is greater than
      * the specified key), returns {@code null}.
      */
-    protected final NodeEntry<K,V> getLowerEntry(K key,ToIntBiFunction<K,K> compare) {
+    protected final NodeEntry<K,V> getLowerEntry(K key) {
         BTreeNode<K,V> node = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         while (!node.isLeaf()) {
             int index = 0;
             for (int i = index; i < node.keys.size(); i++) {
@@ -439,58 +436,6 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
             parent = parent.parent;
         }
         return keyPoint == 0 || isEmpty() ? null : node.keys.get(keyPoint-1);
-    }
-
-    @Override
-    public NodeEntry<K, V> lowerEntry(K key) {
-        if (comparator != null)
-            return getLowerEntry(key,comparator::compare);
-        return getLowerEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
-    }
-
-    @Override
-    public K lowerKey(K key) {
-        NodeEntry<K,V> entry = lowerEntry(key);
-        return entry != null ? entry.key : null;
-    }
-
-    @Override
-    public NodeEntry<K, V> floorEntry(K key) {
-        if (comparator != null)
-            return getFloorEntry(key,comparator::compare);
-        return getFloorEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
-    }
-
-    @Override
-    public K floorKey(K key) {
-        NodeEntry<K,V> entry = floorEntry(key);
-        return entry != null ? entry.key : null;
-    }
-
-    @Override
-    public NodeEntry<K, V> ceilingEntry(K key) {
-        if (comparator != null)
-            return getCeilingEntry(key,comparator::compare);
-        return getCeilingEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
-    }
-
-    @Override
-    public K ceilingKey(K key) {
-        NodeEntry<K,V> entry = ceilingEntry(key);
-        return entry != null ? entry.key : null;
-    }
-
-    @Override
-    public NodeEntry<K, V> higherEntry(K key) {
-        if (comparator != null)
-            return getHigherEntry(key,comparator::compare);
-        return getHigherEntry(key, (k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
-    }
-
-    @Override
-    public K higherKey(K key) {
-        NodeEntry<K,V> entry = higherEntry(key);
-        return entry != null ? entry.key : null;
     }
 
     @Override
@@ -650,7 +595,7 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
         }
 
         public boolean remove(Object o) {
-            for (NodeEntry<K,V> e = firstEntry(); e != null; e = successor(e)) {
+            for (NavigableEntry<K,V> e = firstEntry(); e != null; e = successor(e)) {
                 if (valEquals(e.getValue(), o)) {
                     BTreeMap.this.remove(e.getKey());
                     return true;
@@ -778,173 +723,5 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
             return current.key;
         }
     }
-
-//    /**
-//     * @serial include
-//     */
-//    static final class AscendingSubMap<K,V> extends NavigableSubMap<K,V> {
-//        private static final long serialVersionUID = 912986545866124060L;
-//
-//        AscendingSubMap(AbstractNavigableMap<K,V> m,
-//                        boolean fromStart, K lo, boolean loInclusive,
-//                        boolean toEnd,     K hi, boolean hiInclusive) {
-//            super(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive);
-//        }
-//
-//        public Comparator<? super K> comparator() {
-//            return m.comparator();
-//        }
-//
-//        public NavigableMap<K,V> subMap(K fromKey, boolean fromInclusive,
-//                                        K toKey, boolean toInclusive) {
-//            if (!inRange(fromKey, fromInclusive))
-//                throw new IllegalArgumentException("fromKey out of range");
-//            if (!inRange(toKey, toInclusive))
-//                throw new IllegalArgumentException("toKey out of range");
-//            return new AscendingSubMap<>(m,
-//                    false, fromKey, fromInclusive,
-//                    false, toKey,   toInclusive);
-//        }
-//
-//        public NavigableMap<K,V> headMap(K toKey, boolean inclusive) {
-//            if (!inRange(toKey, inclusive))
-//                throw new IllegalArgumentException("toKey out of range");
-//            return new AscendingSubMap<>(m,
-//                    fromStart, lo,    loInclusive,
-//                    false,     toKey, inclusive);
-//        }
-//
-//        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive) {
-//            if (!inRange(fromKey, inclusive))
-//                throw new IllegalArgumentException("fromKey out of range");
-//            return new AscendingSubMap<>(m,
-//                    false, fromKey, inclusive,
-//                    toEnd, hi,      hiInclusive);
-//        }
-//
-//        public NavigableMap<K,V> descendingMap() {
-//            NavigableMap<K,V> mv = descendingMapView;
-//            return (mv != null) ? mv :
-//                    (descendingMapView =
-//                            new DescendingSubMap<>(m,
-//                                    fromStart, lo, loInclusive,
-//                                    toEnd,     hi, hiInclusive));
-//        }
-//
-//        Iterator<K> keyIterator() {
-//            return new SubMapKeyIterator(absLowest(), absHighFence());
-//        }
-//
-//        Spliterator<K> keySpliterator() {
-//            return new SubMapKeyIterator(absLowest(), absHighFence());
-//        }
-//
-//        Iterator<K> descendingKeyIterator() {
-//            return new DescendingSubMapKeyIterator(absHighest(), absLowFence());
-//        }
-//
-//        final class AscendingEntrySetView extends EntrySetView {
-//            public Iterator<Map.Entry<K,V>> iterator() {
-//                return new SubMapEntryIterator(absLowest(), absHighFence());
-//            }
-//        }
-//
-//        public Set<Map.Entry<K,V>> entrySet() {
-//            EntrySetView es = entrySetView;
-//            return (es != null) ? es : (entrySetView = new AscendingEntrySetView());
-//        }
-//
-//        NavigableEntry<K,V> subLowest()       { return absLowest(); }
-//        NavigableEntry<K,V> subHighest()      { return absHighest(); }
-//        NavigableEntry<K,V> subCeiling(K key) { return absCeiling(key); }
-//        NavigableEntry<K,V> subHigher(K key)  { return absHigher(key); }
-//        NavigableEntry<K,V> subFloor(K key)   { return absFloor(key); }
-//        NavigableEntry<K,V> subLower(K key)   { return absLower(key); }
-//    }
-//
-//    /**
-//     * @serial include
-//     */
-//    static final class DescendingSubMap<K,V>  extends NavigableSubMap<K,V> {
-//        private static final long serialVersionUID = 912986545866120460L;
-//        DescendingSubMap(AbstractNavigableMap<K,V> m,
-//                         boolean fromStart, K lo, boolean loInclusive,
-//                         boolean toEnd,     K hi, boolean hiInclusive) {
-//            super(m, fromStart, lo, loInclusive, toEnd, hi, hiInclusive);
-//        }
-//
-//        private final Comparator<? super K> reverseComparator =
-//                Collections.reverseOrder(m.comparator);
-//
-//        public Comparator<? super K> comparator() {
-//            return reverseComparator;
-//        }
-//
-//        public NavigableMap<K,V> subMap(K fromKey, boolean fromInclusive,
-//                                        K toKey,   boolean toInclusive) {
-//            if (!inRange(fromKey, fromInclusive))
-//                throw new IllegalArgumentException("fromKey out of range");
-//            if (!inRange(toKey, toInclusive))
-//                throw new IllegalArgumentException("toKey out of range");
-//            return new DescendingSubMap<>(m,
-//                    false, toKey,   toInclusive,
-//                    false, fromKey, fromInclusive);
-//        }
-//
-//        public NavigableMap<K,V> headMap(K toKey, boolean inclusive) {
-//            if (!inRange(toKey, inclusive))
-//                throw new IllegalArgumentException("toKey out of range");
-//            return new DescendingSubMap<>(m,
-//                    false, toKey, inclusive,
-//                    toEnd, hi,    hiInclusive);
-//        }
-//
-//        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive) {
-//            if (!inRange(fromKey, inclusive))
-//                throw new IllegalArgumentException("fromKey out of range");
-//            return new DescendingSubMap<>(m,
-//                    fromStart, lo, loInclusive,
-//                    false, fromKey, inclusive);
-//        }
-//
-//        public NavigableMap<K,V> descendingMap() {
-//            NavigableMap<K,V> mv = descendingMapView;
-//            return (mv != null) ? mv :
-//                    (descendingMapView =
-//                            new AscendingSubMap<>(m,
-//                                    fromStart, lo, loInclusive,
-//                                    toEnd,     hi, hiInclusive));
-//        }
-//
-//        Iterator<K> keyIterator() {
-//            return new DescendingSubMapKeyIterator(absHighest(), absLowFence());
-//        }
-//
-//        Spliterator<K> keySpliterator() {
-//            return new DescendingSubMapKeyIterator(absHighest(), absLowFence());
-//        }
-//
-//        Iterator<K> descendingKeyIterator() {
-//            return new SubMapKeyIterator(absLowest(), absHighFence());
-//        }
-//
-//        final class DescendingEntrySetView extends EntrySetView {
-//            public Iterator<Map.Entry<K,V>> iterator() {
-//                return new DescendingSubMapEntryIterator(absHighest(), absLowFence());
-//            }
-//        }
-//
-//        public Set<Map.Entry<K,V>> entrySet() {
-//            EntrySetView es = entrySetView;
-//            return (es != null) ? es : (entrySetView = new DescendingEntrySetView());
-//        }
-//
-//        NavigableEntry<K,V> subLowest()       { return absHighest(); }
-//        NavigableEntry<K,V> subHighest()      { return absLowest(); }
-//        NavigableEntry<K,V> subCeiling(K key) { return absFloor(key); }
-//        NavigableEntry<K,V> subHigher(K key)  { return absLower(key); }
-//        NavigableEntry<K,V> subFloor(K key)   { return absCeiling(key); }
-//        NavigableEntry<K,V> subLower(K key)   { return absHigher(key); }
-//    }
 
 }
