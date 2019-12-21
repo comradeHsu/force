@@ -163,11 +163,11 @@ public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
 
     }
 
-    Iterator<K> keyIterator() {
+    protected Iterator<K> keyIterator() {
         return new KeyIterator(getFirstEntry());
     }
 
-    Iterator<K> descendingKeyIterator() {
+    protected Iterator<K> descendingKeyIterator() {
         return new DescendingKeyIterator(getLastEntry());
     }
 

@@ -320,9 +320,9 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
      * submap classes.
      */
 
-    abstract Iterator<K> keyIterator();
+    protected abstract Iterator<K> keyIterator();
 
-    abstract Iterator<K> descendingKeyIterator();
+    protected abstract Iterator<K> descendingKeyIterator();
 
     static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         private final NavigableMap<E, ?> m;
