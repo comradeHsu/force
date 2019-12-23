@@ -1,8 +1,9 @@
 package ds.force;
 
 import java.util.Arrays;
+import java.util.function.BiFunction;
 
-public class BinaryIndexedTree {
+public class BinaryIndexedTree<E> {
 
     /**
      * Default initial capacity.
@@ -12,7 +13,7 @@ public class BinaryIndexedTree {
     /**
      * Shared empty array instance used for empty instances.
      */
-    private static final int[] EMPTY_ELEMENTDATA = {};
+    private static final Object[] EMPTY_ELEMENTDATA = {};
 
     /**
      * The maximum size of array to allocate.
@@ -22,20 +23,24 @@ public class BinaryIndexedTree {
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    transient int[] dataTable;
+    final transient BiFunction<E,E,E> plusFunction;
 
-    transient int[] treeArray;
+    final transient BiFunction<E,E,E> subFunction;
+
+    transient Object[] dataTable;
+
+    transient Object[] treeArray;
 
     private int size;
 
-    public BinaryIndexedTree(){
-        this(DEFAULT_CAPACITY);
+    public BinaryIndexedTree(BiFunction<E,E,E> plusFunction,BiFunction<E,E,E> subFunction){
+        this(DEFAULT_CAPACITY,plusFunction,subFunction);
     }
 
-    public BinaryIndexedTree(int initCapacity){
+    public BinaryIndexedTree(int initCapacity,BiFunction<E,E,E> plusFunction,BiFunction<E,E,E> subFunction){
         if (initCapacity > 0) {
-            this.dataTable = new int[initCapacity];
-            this.treeArray = new int[initCapacity];
+            this.dataTable = new Object[initCapacity];
+            this.treeArray = new Object[initCapacity];
         } else if (initCapacity == 0) {
             this.dataTable = EMPTY_ELEMENTDATA;
             this.treeArray = EMPTY_ELEMENTDATA;
@@ -43,20 +48,25 @@ public class BinaryIndexedTree {
             throw new IllegalArgumentException("Illegal Capacity: "+
                     initCapacity);
         }
+        this.plusFunction = plusFunction;
+        this.subFunction = subFunction;
     }
 
     /**
      * @throws NullPointerException if the specified array is null
      * @param array
      */
-    public BinaryIndexedTree(int[] array){
+    @SuppressWarnings("unchecked")
+    public BinaryIndexedTree(Object[] array,BiFunction<E,E,E> biFunction,BiFunction<E,E,E> subFunction){
         this.dataTable = array;
         this.size = array.length;
-        this.treeArray = new int[size];
+        this.treeArray = new Object[size];
+        this.plusFunction = biFunction;
+        this.subFunction = subFunction;
         for (int i = 0; i < array.length; i++){
             int index = i;
             while(index < size){
-                treeArray[index] += dataTable[i];
+                treeArray[index] = biFunction.apply((E)treeArray[index],(E)dataTable[i]);
                 index += lowBit(index);
             }
         }
@@ -103,41 +113,69 @@ public class BinaryIndexedTree {
                 MAX_ARRAY_SIZE;
     }
 
-    int lowBit(int index){
+    /**
+     * important function
+     * @param index index in array
+     * @return the position of the first 1 in a binary representation
+     */
+    final int lowBit(int index){
         int sequence = index + 1;
         return sequence & (-sequence);
     }
 
-    public int get(int index){
+    /**
+     * return the raw data by index
+     * @param index index in array
+     * @return raw data
+     */
+    @SuppressWarnings("unchecked")
+    public E get(int index){
         rangeCheckForInsert(index);
-        return dataTable[index];
+        return (E) dataTable[index];
     }
 
-    public void set(int index, int value){
-        int oldValue = dataTable[index];
+    /**
+     * replace old value for index of array to new value
+     * @param index index in array
+     * @param value new value
+     */
+    @SuppressWarnings("unchecked")
+    public void set(int index, E value){
+        E oldValue = (E) dataTable[index];
         dataTable[index] = value;
-        int diff = oldValue - value;
+        E diff = subFunction.apply(oldValue,value);
         while(index < size){
-            treeArray[index] -= diff;
+            treeArray[index] = subFunction.apply(oldValue,value);
             index += lowBit(index);
         }
     }
 
-    public void add(int index, int value){
-        dataTable[index] += value;
+    /**
+     * add value into index of array
+     * @param index index in array
+     * @param value add's value
+     */
+    @SuppressWarnings("unchecked")
+    public void add(int index, E value){
+        dataTable[index] = plusFunction.apply((E) dataTable[index],value);
         while(index < size){
-            treeArray[index] += value;
+            treeArray[index] = plusFunction.apply((E) treeArray[index],value);
             index += lowBit(index);
         }
     }
 
-    public boolean insert(int value){
+    /**
+     * append a value to data array
+     * @param value
+     * @return
+     */
+    public boolean insert(E value){
         ensureCapacityInternal(size + 1);
         dataTable[size] = value;
         int index = size;
-        int newSum = getSum(size) + value;
+        E newSum = plusFunction.apply(getSum(size) ,value);
         size = size + 1;
-        treeArray[index] = newSum - getSum(size - lowBit(index));
+        treeArray[index] = subFunction.apply(newSum,getSum(size - lowBit(index)));
         return true;
     }
 
@@ -169,7 +207,13 @@ public class BinaryIndexedTree {
         return "Index: "+index+", Size: "+size;
     }
 
-    public void insert(int index, int value){
+    /**
+     * inserts a data in the specified position of the array
+     * @param index
+     * @param value
+     */
+    @SuppressWarnings("unchecked")
+    public void insert(int index, E value){
         rangeCheckForInsert(index);
         ensureCapacityInternal(size + 1);
         System.arraycopy(dataTable, index, dataTable, index + 1,
@@ -180,14 +224,21 @@ public class BinaryIndexedTree {
         size++;
         for (int i = index; i < size; i++){
             treeArray[i] = 0;
-            int newSum = getSum(i) + dataTable[i];
-            treeArray[i] = newSum - getSum(i - lowBit(i) + 1);
+            E newSum = plusFunction.apply(getSum(i), (E) dataTable[i]);
+            treeArray[i] = subFunction.apply(newSum,getSum(i - lowBit(i) + 1));
         }
     }
 
-    public int remove(int index){
+    /**
+     * delete data at specified location
+     * @param index index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return old value
+     */
+    @SuppressWarnings("unchecked")
+    public E remove(int index){
         rangeCheck(index);
-        int oldValue = dataTable[index];
+        E oldValue = (E) dataTable[index];
         int numMoved = size - index - 1;
         if (numMoved > 0) {
             System.arraycopy(dataTable, index + 1, dataTable, index,
@@ -196,39 +247,58 @@ public class BinaryIndexedTree {
         size--;
         for (int i = index; i < size; i++){
             treeArray[i] = 0;
-            int newSum = getSum(i) + dataTable[i];
-            treeArray[i] = newSum - getSum(i - lowBit(i) + 1);
+            E newSum = plusFunction.apply(getSum(i), (E) dataTable[i]);
+            treeArray[i] = subFunction.apply(newSum,getSum(i - lowBit(i) + 1));
         }
         treeArray[size] = 0;
         dataTable[size] = 0;
         return oldValue;
     }
 
-    public int getSum(int index){
-        int sum = 0;
+    /**
+     * return the sum of interval from 0 to index
+     * @param index the end's index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return sum
+     */
+    @SuppressWarnings("unchecked")
+    public E getSum(int index){
+        E sum = null;
         int tail = index - 1;
         while(tail >= 0){
-            sum += treeArray[tail];
+            sum = plusFunction.apply(sum, (E) treeArray[tail]);
             tail -= lowBit(tail);
         }
         return sum;
     }
 
-    public int getIntervalSum(int start, int end){
-        int sum = 0;
-        int redundant = 0;
+    /**
+     * return the sum of interval from start to end
+     * @param start the start's index
+     * @param end the end's index
+     * @throws IndexOutOfBoundsException when index >= size
+     * @return the sum
+     */
+    @SuppressWarnings("unchecked")
+    public E getIntervalSum(int start, int end){
+        E sum = null;
+        E redundant = null;
         int head = start - 1,tail = end - 1;
         while(head >= 0){
-            redundant += treeArray[head];
+            redundant = plusFunction.apply(redundant, (E) treeArray[head]);
             head -= lowBit(head);
         }
         while(tail >= 0){
-            sum += treeArray[tail];
+            sum = plusFunction.apply(sum, (E) treeArray[tail]);
             tail -= lowBit(tail);
         }
-        return sum - redundant;
+        return subFunction.apply(sum,redundant);
     }
 
+    /**
+     * return the array's size
+     * @return
+     */
     public int size(){
         return size;
     }

@@ -1,10 +1,14 @@
-package ds.force;
+package ds.force.primitive;
 
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
+
 /**
  * A list for storage basic data type by int. But not implementation List<E> {@code List<E>}
  *
@@ -79,6 +83,10 @@ public class IntArrayList implements Cloneable, Serializable {
     public IntArrayList(int[] array) {
         this.elementData = array;
         this.size = array.length;
+    }
+
+    public static IntArrayList of(int...number){
+        return new IntArrayList(number);
     }
 
     private static int calculateCapacity(int[] elementData, int minCapacity) {
@@ -501,4 +509,27 @@ public class IntArrayList implements Cloneable, Serializable {
 //                return false;
 //        return true;
 //    }
+    public Spliterator.OfInt spliterator() {
+        return Arrays.spliterator(elementData,0, size);
+    }
+
+    public IntStream stream() {
+        return Arrays.stream(elementData,0,size);
+    }
+
+    public IntStream parallelStream() {
+        return StreamSupport.intStream(spliterator(),true);
+    }
+
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < size; i++) {
+            sb.append(elementData[i]).append(",");
+        }
+        if (!this.isEmpty()) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.append(']').toString();
+    }
 }

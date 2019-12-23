@@ -1,7 +1,7 @@
 package ds.force;
 
+import ds.force.heap.Heap;
 import junit.framework.TestCase;
-import org.junit.Test;
 
 import java.util.PriorityQueue;
 
