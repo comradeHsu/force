@@ -5,6 +5,7 @@ import ds.force.AbstractNavigableMap;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.ToIntBiFunction;
 
 public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
@@ -12,17 +13,18 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
     @Override
     public int size() {
-        return 0;
+        return root == null ? 0 : root.size;
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return root == null;
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return false;
+        SplayEntry<K,V> entry = getEntry((K)key);
+        return entry != null;
     }
 
     @Override
@@ -32,11 +34,45 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
     @Override
     public V get(Object key) {
-        return null;
+        SplayEntry<K,V> entry = getEntry((K)key);
+        V value = null;
+        if (entry != null){
+            splay(entry);
+            value = entry.value;
+        }
+        return value;
     }
 
     @Override
     public V put(K key, V value) {
+//        if (key == null)
+//            throw new NullPointerException();
+        SplayEntry<K,V> t = root;
+        if (t == null){
+            root = new SplayEntry<>(key, value);
+            return null;
+        }
+        SplayEntry<K,V> parent;
+        int cmp;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        do {
+            parent = t;
+            cmp = compare.applyAsInt(key,t.key);
+            if (cmp < 0)
+                t =  t.left;
+            else if (cmp > 0)
+                t =  t.right;
+            else {
+                splay(t);
+                return t.setValue(value);
+            }
+        } while (t != null);
+        SplayEntry<K,V> e = new SplayEntry<>(key,value,parent);
+        if (cmp < 0)
+            parent.left = e;
+        else
+            parent.right = e;
+        splay(e);
         return null;
     }
 
@@ -46,7 +82,22 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
     }
 
     @Override
-    protected NavigableEntry<K, V> getEntry(K key) {
+    protected SplayEntry<K, V> getEntry(K key) {
+        if (key == null)
+            throw new NullPointerException();
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        SplayEntry<K,V> node = root;
+        int cmp;
+        do {
+            cmp = compare.applyAsInt(key,node.key);
+            if (cmp > 0){
+                node = node.right;
+            } else if (cmp < 0){
+                node = node.left;
+            } else {
+                return node;
+            }
+        } while (node != null);
         return null;
     }
 
@@ -102,48 +153,48 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
     @Override
     public void clear() {
-
+        this.root = null;
     }
 
     /** From CLR */
     private void rotateLeft(SplayEntry<K,V> p) {
         if (p != null) {
-            SplayEntry<K,V> r =  p.right;
-            p.right = r.left;
-            if (r.left != null)
-                r.left.parent = p;
-            r.parent = p.parent;
-            if (p.parent == null)
-                root = r;
-            else if (p.parent.left == p)
-                p.parent.left = r;
+            SplayEntry<K,V> parent =  p.parent;
+            parent.right = p.left;
+            if (p.left != null)
+                p.left.parent = parent;
+            p.parent = parent.parent;
+            if (parent.parent == null)
+                root = p;
+            else if (parent.parent.left == parent)
+                parent.parent.left = p;
             else
-                p.parent.right = r;
-            r.left = p;
-            p.parent = r;
+                parent.parent.right = p;
+            p.left = parent;
+            parent.parent = p;
         }
     }
 
     /** From CLR */
     private void rotateRight(SplayEntry<K,V> p) {
         if (p != null) {
-            SplayEntry<K,V> l = p.left;
-            p.left = l.right;
-            if (l.right != null) l.right.parent = p;
-            l.parent = p.parent;
+            SplayEntry<K,V> parent =  p.parent;
+            parent.left = p.right;
+            if (p.right != null) p.right.parent = parent;
+            p.parent = parent.parent;
             if (p.parent == null)
-                root = l;
-            else if (p.parent.right == p)
-                p.parent.right = l;
-            else p.parent.left = l;
-            l.right = p;
-            p.parent = l;
+                root = p;
+            else if (parent.parent.right == parent)
+                parent.parent.right = p;
+            else parent.parent.left = p;
+            p.right = parent;
+            parent.parent = p;
         }
     }
 
     final void splay(SplayEntry<K,V> entry){
         SplayEntry<K,V> parent,grandfather;
-        while (entry.parent != root){
+        while (entry.parent != root && entry != root){
             parent = entry.parent;
             grandfather = parent.parent;
             if (parent == leftOf(grandfather) && entry == leftOf(parent)){
@@ -163,14 +214,31 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
                 rotateRight(entry);
             }
         }
+        if (entry == root) return;
         if (entry == leftOf(entry.parent))
             rotateRight(entry);
-        else rotateLeft(entry);
+        else if (entry == rightOf(entry.parent))
+            rotateLeft(entry);
     }
 
     private static class SplayEntry<K,V> extends AbstractNavigableMap.NavigableEntry<K,V> {
 
+        int size;
+
         SplayEntry<K,V> left, right, parent;
+
+        SplayEntry(K key, V value){
+            this.key = key;
+            this.value = value;
+            this.size = 1;
+        }
+
+        SplayEntry(K key, V value, SplayEntry<K,V> parent){
+            this.key = key;
+            this.value = value;
+            this.parent = parent;
+            this.size = 1;
+        }
 
     }
 
