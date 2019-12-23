@@ -37,6 +37,12 @@ public class BTreeMap<K,V> implements Map<K,V>{
         this.root = new BTreeNode<>(degree,null);
     }
 
+    public BTreeMap(int degree){
+        this.comparator = null;
+        this.degree = degree;
+        this.root = new BTreeNode<>(degree,null);
+    }
+
     @Override
     public int size() {
         return size;

@@ -1,6 +1,6 @@
 package ds.force;
 
-import ds.force.primitive.IntArrayList;
+import ds.force.IntArrayList;
 import junit.framework.TestCase;
 
 import java.util.*;
@@ -35,7 +35,7 @@ public class BTreeMapTest extends TestCase {
     }
 
     public void testRemove(){
-        IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
+        IntArrayList ints = new IntArrayList(new int[]{46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37});
         BTreeMap<Integer,Integer> map = new BTreeMap<>();
         for (int i = 0; i < ints.size(); i++) {
             map.put(ints.get(i),ints.get(i));
