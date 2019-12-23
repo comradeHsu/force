@@ -14,12 +14,12 @@ import java.util.concurrent.TimeUnit;
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Thread)
-@Fork(1)
-@Warmup(iterations = 2,time = 5)
-@Measurement(iterations = 4,time = 1)
+@Fork(2)
+@Warmup(iterations = 2,time = 4)
+@Measurement(iterations = 4,time = 4)
 public class BTreeMapBenchmark {
 
-    @Param({"10000", "100000", "500000", "1000000"})
+    @Param({"100000","500000","1000000"})
     private int n;
 
     private BTreeMap<Integer,Integer> bTreeMap;
@@ -30,7 +30,7 @@ public class BTreeMapBenchmark {
 
     @Setup(Level.Trial)
     public void init() {
-        bTreeMap = new BTreeMap<>(30);
+        bTreeMap = new BTreeMap<>(20);
         treeMap = new TreeMap<>();
         for (int i = 0; i < n; i++) {
             int key = random.nextInt();
@@ -53,18 +53,14 @@ public class BTreeMapBenchmark {
 
     @Benchmark
     public void bTreeMapPut() {
-        for (int i = 0; i < n; i++) {
-            int key = random.nextInt();
-            bTreeMap.put(key,i);
-        }
+        int key = random.nextInt();
+        bTreeMap.put(key,key);
     }
 
     @Benchmark
     public void treeMapPut() {
-        for (int i = 0; i < n; i++) {
-            int key = random.nextInt();
-            treeMap.put(key,i);
-        }
+        int key = random.nextInt();
+        treeMap.put(key,key);
     }
 
     @TearDown(Level.Trial) // 结束方法，在全部Benchmark运行之后进行
@@ -74,7 +70,8 @@ public class BTreeMapBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        Options options = new OptionsBuilder().include(BTreeMapBenchmark.class.getSimpleName()).build();
+        Options options = new OptionsBuilder()
+                .include(BTreeMapBenchmark.class.getSimpleName()).build();
         new Runner(options).run();
     }
 }

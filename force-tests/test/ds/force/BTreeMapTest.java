@@ -144,12 +144,19 @@ public class BTreeMapTest extends TestCase {
     }
 
     public void testGet(){
-        BTreeMap<Integer,Integer> map = new BTreeMap<>();
+        BTreeMap<Integer,Integer> map = new BTreeMap<>(10);
         map.put(3,3);
         assertNull(map.get(10));
         map.put(2,2);
-        map.put(4,4);
-        map.put(5,5);
+        assertEquals(Integer.valueOf(3),map.get(3));
+        Random random = new Random();
+        for (int i = 0; i < 20; i++) {
+            map.put(i,i);
+        }
+        for (int i = 0; i < 50; i++) {
+            int key = random.nextInt(20);
+            assertEquals(Integer.valueOf(key),map.get(key));
+        }
     }
 
     public void testLowerEntry(){

@@ -94,16 +94,57 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
         BTreeNode<K,V> node = this.root;
         while (node != null){
             int index = 0;
-            for (int i = index; i < node.keys.size(); i++) {
-                NodeEntry<K,V> entry = node.keys.get(i);
-                int cmp = compare.applyAsInt(key, entry.key);
-                if (cmp < 0) break;
-                else if (cmp > 0) index++;
-                else return entry;
+            int right = node.keys.size() - 1;
+            NodeEntry<K,V> first,last;
+            if (compare.applyAsInt(key, (first = node.keys.get(index)).key) < 0){
+                index = 0;
+            } else if (compare.applyAsInt(key, (last=node.keys.get(right)).key) > 0) {
+                index = right + 1;
+//            }
+            } else if (compare.applyAsInt(key, first.key) == 0){
+                return first;
+            } else if (compare.applyAsInt(key, last.key) == 0){
+                return last;
             }
+            else {
+                int left = index;
+                while (left < right) {
+                    int mid = (left + right) >> 1;
+                    NodeEntry<K, V> entry = node.keys.get(mid);
+                    int cmp = compare.applyAsInt(key, entry.key);
+                    if (cmp > 0) {
+                        left = left < mid ? mid : left+1;
+                    } else if (cmp < 0) {
+                        right = mid;
+                    } else return entry;
+                }
+                index = left;
+            }
+//            for (int i = index; i < node.keys.size(); i++) {
+//                NodeEntry<K,V> entry = node.keys.get(i);
+//                int cmp = compare.applyAsInt(key, entry.key);
+//                if (cmp < 0) break;
+//                else if (cmp > 0) index++;
+//                else return entry;
+//            }
             node = node.isLeaf() ? null : node.childes.get(index);
         }
         return null;
+    }
+
+    private NodeEntry<K,V> treeSearch(BTreeNode<K, V> node, K key) {
+        int i = 0;
+        while (i < node.keys.size() && compare(key,node.keys.get(i).key) > 0) {
+            ++i;
+        }
+
+        if (i < node.keys.size() && compare(key,node.keys.get(i).key) == 0) {
+            return node.keys.get(i);
+        } else if (node.isLeaf()) {
+            return null;
+        } else {
+            return treeSearch(node.childes.get(i), key);
+        }
     }
 
     @Override
@@ -558,8 +599,8 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
         @SuppressWarnings("unchecked")
         BTreeNode(int degree, BTreeNode<K,V> parent) {
-            this.keys = new ArrayList<>((degree<<1) - 1);
-            this.childes = new ArrayList<>(degree<<1);
+            this.keys = new FastArrayList<>((degree<<1) - 1);
+            this.childes = new FastArrayList<>(degree<<1);
             this.parent = parent;
         }
 
@@ -622,12 +663,12 @@ public class BTreeMap<K,V> extends AbstractNavigableMap<K,V> {
      * submap classes.
      */
     @Override
-    Iterator<K> keyIterator() {
+    protected Iterator<K> keyIterator() {
         return new KeyIterator();
     }
 
     @Override
-    Iterator<K> descendingKeyIterator() {
+    protected Iterator<K> descendingKeyIterator() {
         return new DescendingKeyIterator();
     }
 
