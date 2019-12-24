@@ -276,7 +276,7 @@ public abstract class AbstractNavigableMap<K,V> implements NavigableMap<K,V> {
     protected transient NavigableMap<K,V> descendingMap;
     protected transient Collection<V> values;
 
-    abstract class EntrySet<E> extends AbstractSet<Map.Entry<K,V>> {
+    protected abstract class EntrySet<E> extends AbstractSet<Map.Entry<K,V>> {
         public abstract Iterator<Map.Entry<K,V>> iterator();
 
         public boolean contains(Object o) {
