@@ -3,14 +3,11 @@ package ds.force.binarytree.treap;
 import ds.force.AbstractNavigableMap;
 
 import java.util.AbstractCollection;
-import java.util.AbstractSet;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
 import java.util.NoSuchElementException;
-import java.util.SortedSet;
+import java.util.Spliterator;
 
 public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
 
@@ -126,39 +123,14 @@ public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
         }
     }
 
-    class EntrySet extends AbstractSet<Map.Entry<K,V>> {
+    class EntrySet extends AbstractNavigableMap.EntrySet {
         public Iterator<Map.Entry<K,V>> iterator() {
             return new EntryIterator(getFirstEntry());
         }
 
-        public boolean contains(Object o) {
-            if (!(o instanceof Map.Entry))
-                return false;
-            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
-            Object value = entry.getValue();
-            Map.Entry<K,V> p = getEntry((K) entry.getKey());
-            return p != null && valEquals(p.getValue(), value);
-        }
-
-        public boolean remove(Object o) {
-            if (!(o instanceof Map.Entry))
-                return false;
-            Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
-            Object value = entry.getValue();
-            Map.Entry<K,V> p = getEntry((K) entry.getKey());
-            if (p != null && valEquals(p.getValue(), value)) {
-                deleteEntry(p);
-                return true;
-            }
-            return false;
-        }
-
-        public int size() {
-            return AbstractTreapMap.this.size();
-        }
-
-        public void clear() {
-            AbstractTreapMap.this.clear();
+        @Override
+        public Spliterator<Entry> spliterator() {
+            throw new UnsupportedOperationException();
         }
 
     }
@@ -169,67 +141,6 @@ public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
 
     protected Iterator<K> descendingKeyIterator() {
         return new DescendingKeyIterator(getLastEntry());
-    }
-
-    static final class KeySet<E> extends AbstractSet<E> implements NavigableSet<E> {
-        private final NavigableMap<E, ?> m;
-        KeySet(NavigableMap<E,?> map) { m = map; }
-
-        public Iterator<E> iterator() {
-            return ((FHQTreapMap<E,?>)m).keyIterator();
-        }
-
-        public Iterator<E> descendingIterator() {
-            return ((FHQTreapMap<E,?>)m).descendingKeyIterator();
-        }
-
-        public int size() { return m.size(); }
-        public boolean isEmpty() { return m.isEmpty(); }
-        public boolean contains(Object o) { return m.containsKey(o); }
-        public void clear() { m.clear(); }
-        public E lower(E e) { return m.lowerKey(e); }
-        public E floor(E e) { return m.floorKey(e); }
-        public E ceiling(E e) { return m.ceilingKey(e); }
-        public E higher(E e) { return m.higherKey(e); }
-        public E first() { return m.firstKey(); }
-        public E last() { return m.lastKey(); }
-        public Comparator<? super E> comparator() { return m.comparator(); }
-        public E pollFirst() {
-            Map.Entry<E,?> e = m.pollFirstEntry();
-            return (e == null) ? null : e.getKey();
-        }
-        public E pollLast() {
-            Map.Entry<E,?> e = m.pollLastEntry();
-            return (e == null) ? null : e.getKey();
-        }
-        public boolean remove(Object o) {
-            int oldSize = size();
-            m.remove(o);
-            return size() != oldSize;
-        }
-        public NavigableSet<E> subSet(E fromElement, boolean fromInclusive,
-                                      E toElement,   boolean toInclusive) {
-            return new KeySet<>(m.subMap(fromElement, fromInclusive,
-                    toElement,   toInclusive));
-        }
-        public NavigableSet<E> headSet(E toElement, boolean inclusive) {
-            return new KeySet<>(m.headMap(toElement, inclusive));
-        }
-        public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
-            return new KeySet<>(m.tailMap(fromElement, inclusive));
-        }
-        public SortedSet<E> subSet(E fromElement, E toElement) {
-            return subSet(fromElement, true, toElement, false);
-        }
-        public SortedSet<E> headSet(E toElement) {
-            return headSet(toElement, false);
-        }
-        public SortedSet<E> tailSet(E fromElement) {
-            return tailSet(fromElement, true);
-        }
-        public NavigableSet<E> descendingSet() {
-            return new KeySet<>(m.descendingMap());
-        }
     }
 
     /**

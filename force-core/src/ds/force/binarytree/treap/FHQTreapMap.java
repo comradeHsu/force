@@ -1,16 +1,15 @@
 package ds.force.binarytree.treap;
 
+import ds.force.AbstractNavigableMap;
+
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.NavigableSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.function.ToIntBiFunction;
 
 public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap<K,V> {
 
@@ -385,35 +384,31 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
         this.root = null;
     }
 
-    /**
-     * Fields initialized to contain an instance of the entry set view
-     * the first time this view is requested.  Views are stateless, so
-     * there's no reason to create more than one.
-     */
-    private transient EntrySet entrySet;
-    private transient KeySet<K> navigableKeySet;
-    private transient NavigableMap<K,V> descendingMap;
+//    /**
+//     * Fields initialized to contain an instance of the entry set view
+//     * the first time this view is requested.  Views are stateless, so
+//     * there's no reason to create more than one.
+//     */
+//    private transient EntrySet entrySet;
 
     @Override
     public Set<K> keySet() {
         return navigableKeySet();
     }
 
-    transient Collection<V> values;
-
     @Override
     public Collection<V> values() {
         Collection<V> vs = values;
         if (vs == null) {
             vs = new Values();
-            values = vs;
+            super.values = vs;
         }
         return vs;
     }
 
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
-        EntrySet es = entrySet;
+        AbstractNavigableMap.EntrySet es = entrySet;
         return (es != null) ? es : (entrySet = new EntrySet());
     }
 

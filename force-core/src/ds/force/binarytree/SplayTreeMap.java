@@ -1,9 +1,15 @@
 package ds.force.binarytree;
 
 import ds.force.AbstractNavigableMap;
-import ds.force.BTreeMap;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.ToIntBiFunction;
 
 public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
@@ -600,6 +606,29 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
         public K next() {
             return prevEntry().key;
         }
+    }
+
+    public V get(int ranking){
+        SplayEntry<K,V> node = this.root;
+        while (node != null){
+            if (ranking == sizeOf(node.left) + 1) {
+                return node.value;
+            } else if (ranking <= sizeOf(node.left)) {
+                node = node.left;
+            } else {
+                ranking -= sizeOf(node.left) + 1;
+                node = node.right;
+            }
+        }
+        return null;
+    }
+
+    public int getSequence(K key){
+        return 0;
+    }
+
+    public SplayTreeMap<K,V> split(K key){
+        return null;
     }
 
 }
