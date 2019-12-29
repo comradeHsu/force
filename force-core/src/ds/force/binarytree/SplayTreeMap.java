@@ -2,14 +2,7 @@ package ds.force.binarytree;
 
 import ds.force.AbstractNavigableMap;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.ToIntBiFunction;
 
 public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
@@ -624,11 +617,55 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
     }
 
     public int getSequence(K key){
-        return 0;
+        int sequence = 0;
+        SplayEntry<K,V> entry = this.root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (entry != null){
+            int cmp = compare.applyAsInt(key,entry.key);
+            if (cmp < 0){
+                entry = entry.left;
+            }
+            else if (cmp > 0){
+                entry = entry.right;
+                sequence = sequence + sizeOf(entry.left)+1;
+            } else {
+                break;
+            }
+        }
+        return sequence;
     }
 
     public SplayTreeMap<K,V> split(K key){
-        return null;
+        SplayEntry<K,V> node = this.root;
+        SplayEntry<K,V> newNode = null, splitPoint = null;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        Deque<SplayEntry<K,V>> stack = new ArrayDeque<>();
+        while (node != null){
+            stack.push(node);
+            if (compare.applyAsInt(node.key,key) <= 0){
+                node = node.right;
+            } else {
+                node = node.left;
+            }
+        }
+        while (!stack.isEmpty()){
+            SplayEntry<K,V> current = stack.pop();
+            if (compare.applyAsInt(current.key,key) <= 0){
+                current.right = splitPoint;
+                splitPoint = current;
+            } else {
+                current.left = newNode;
+                newNode = current;
+            }
+            updateSize(current);
+        }
+        SplayTreeMap<K,V> result = new SplayTreeMap<>();
+        if (newNode == root) {
+            result.root = splitPoint;
+        } else {
+            result.root = newNode;
+        }
+        return result;
     }
 
 }
