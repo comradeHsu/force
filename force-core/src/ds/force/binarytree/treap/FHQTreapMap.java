@@ -318,7 +318,10 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
     }
 
     public FHQTreapMap<K,V> split(K key){
-        return null;
+        Entry<K,V> splittingNode = splitToLeft(key);
+        FHQTreapMap<K,V> result = new FHQTreapMap<>();
+        result.root = splittingNode;
+        return result;
     }
 
     /**

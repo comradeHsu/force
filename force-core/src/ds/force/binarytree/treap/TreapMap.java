@@ -1,11 +1,8 @@
 package ds.force.binarytree.treap;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Random;
-import java.util.Set;
+import ds.force.binarytree.SplayTreeMap;
+
+import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.ToIntBiFunction;
 
@@ -142,7 +139,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
 
     @Override
     public int size() {
-        return 0;
+        return root == null ? 0 : root.size;
     }
 
     @Override
@@ -152,11 +149,15 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
 
     @Override
     public boolean containsKey(Object key) {
-        return false;
+        Entry<K,V> entry = getEntry(key);
+        return entry != null;
     }
 
     @Override
     public boolean containsValue(Object value) {
+        for (Map.Entry<K,V> e : entrySet())
+            if (valEquals(value, e.getValue()))
+                return true;
         return false;
     }
 
@@ -249,16 +250,15 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
      */
     @Override
     protected Entry<K,V> getEntry(Object key){
-        if (comparator != null)
-            return getEntryUsingComparator(key);
         if (key == null)
             throw new NullPointerException();
         Entry<K,V> node = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         @SuppressWarnings("unchecked")
-        Comparable<? super K> k = (Comparable<? super K>) key;
+        K k = (K) key;
         int cmp;
         do {
-            cmp = k.compareTo(node.key);
+            cmp = compare.applyAsInt(k,node.key);
             if (cmp > 0){
                 node = (Entry<K, V>) node.right;
             } else if (cmp < 0){
@@ -267,25 +267,6 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
                 return node;
             }
         } while (node != null);
-        return null;
-    }
-
-    private Entry<K,V> getEntryUsingComparator(Object key){
-        @SuppressWarnings("unchecked")
-        K k = (K) key;
-        Comparator<? super K> cpr = comparator;
-        if (cpr != null) {
-            Entry<K,V> p = root;
-            while (p != null) {
-                int cmp = cpr.compare(k, p.key);
-                if (cmp < 0)
-                    p = (Entry<K, V>) p.left;
-                else if (cmp > 0)
-                    p = (Entry<K, V>) p.right;
-                else
-                    return p;
-            }
-        }
         return null;
     }
 
@@ -334,6 +315,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
         else
             parent.right = e;
         shiftUp(e);
+        updateSizeForTree(parent);
         return null;
     }
 
@@ -351,6 +333,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
             }
         }
         if (node.left == null && node.right == null){
+            Entry<K,V> parent = node.parent;
             if (node == root){
                 root = null;
             } else if (node == node.parent.left){
@@ -358,6 +341,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
             } else {
                 node.parent.right = node.parent =null;
             }
+            updateSizeForTree(parent);
             return node.getValue();
         }
         Entry<K,V> swap = (Entry<K, V>) (node.left == null ? node.right : node.left);
@@ -370,6 +354,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
             node.parent.right = swap;
         }
         node.left = node.right = node.parent = null;
+        updateSizeForTree(swap.parent);
         return node.getValue();
     }
 
@@ -402,6 +387,8 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
                 p.parent.right = r;
             r.left = p;
             p.parent = r;
+            updateSize(p);
+            updateSize(r);
         }
     }
 
@@ -419,10 +406,75 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
             else p.parent.left = l;
             l.right = p;
             p.parent = l;
+            updateSize(p);
+            updateSize(l);
         }
     }
 
     public TreapMap<K,V> split(K key){
+        Entry<K,V> newNode = null, splitPoint = null;
+        Entry<K,V> node = this.root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        Deque<Entry<K,V>> stack = new ArrayDeque<>();
+        while (node != null){
+            stack.push(node);
+            if (compare.applyAsInt(node.key,key) <= 0){
+                node = (Entry<K, V>) node.right;
+            } else {
+                node = (Entry<K, V>) node.left;
+            }
+        }
+        while (!stack.isEmpty()){
+            Entry<K,V> current = stack.pop();
+            if (compare.applyAsInt(current.key,key) <= 0){
+                current.right = splitPoint;
+                splitPoint = current;
+            } else {
+                current.left = newNode;
+                newNode = current;
+            }
+            updateSize(current);
+        }
+        TreapMap<K,V> result = new TreapMap<>();
+        if (newNode == root) {
+            result.root = splitPoint;
+        } else {
+            result.root = newNode;
+        }
+        return result;
+    }
+
+    public int getSequence(K key){
+        int sequence = 0;
+        AbstractEntry<K,V> entry = this.root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (entry != null){
+            int cmp = compare.applyAsInt(key,entry.key);
+            if (cmp < 0){
+                entry = entry.left;
+            }
+            else if (cmp > 0){
+                entry = entry.right;
+                sequence = sequence + sizeOf(entry.left)+1;
+            } else {
+                break;
+            }
+        }
+        return sequence;
+    }
+
+    public V get(int ranking){
+        AbstractEntry<K,V> node = this.root;
+        while (node != null){
+            if (ranking == sizeOf(node.left) + 1) {
+                return node.value;
+            } else if (ranking <= sizeOf(node.left)) {
+                node = node.left;
+            } else {
+                ranking -= sizeOf(node.left) + 1;
+                node = node.right;
+            }
+        }
         return null;
     }
 
@@ -454,6 +506,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<Map.Entry<K, V>> entrySet() {
         EntrySet es = entrySet;
         return (es != null) ? es : (entrySet = new EntrySet());
@@ -483,15 +536,34 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
 
     private static class Entry<K,V> extends AbstractTreapMap.AbstractEntry<K,V> {
 
+        int size;
+
         Entry<K,V> parent;
 
         Entry(K key, V value, int priority){
             super(key, value, priority);
+            this.size = 1;
         }
 
         Entry(K key, V value, int priority,Entry<K,V> parent){
             super(key, value, priority);
             this.parent = parent;
+            this.size = 1;
         }
+    }
+
+    private void updateSize(Entry<K,V> entry){
+        entry.size = sizeOf(entry.left)+sizeOf(entry.right)+1;
+    }
+
+    private void updateSizeForTree(Entry<K,V> entry){
+        while (entry != null) {
+            entry.size = sizeOf(entry.left) + sizeOf(entry.right) + 1;
+            entry = entry.parent;
+        }
+    }
+
+    static final <K,V> int sizeOf(AbstractEntry<K,V> entry){
+        return entry == null ? 0 : ((Entry<K,V>)entry).size;
     }
 }
