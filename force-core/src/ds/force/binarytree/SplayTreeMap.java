@@ -2,12 +2,30 @@ package ds.force.binarytree;
 
 import ds.force.AbstractNavigableMap;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.function.ToIntBiFunction;
 
 public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
 
     transient SplayEntry<K,V> root;
+
+    public SplayTreeMap() {
+        super();
+    }
+
+    public SplayTreeMap(Comparator<? super K> comparator) {
+        super(comparator);
+    }
 
     @Override
     public int size() {
