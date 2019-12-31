@@ -644,9 +644,10 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
                 entry = entry.left;
             }
             else if (cmp > 0){
-                entry = entry.right;
                 sequence = sequence + sizeOf(entry.left)+1;
+                entry = entry.right;
             } else {
+                sequence = sequence + sizeOf(entry.left);
                 break;
             }
         }

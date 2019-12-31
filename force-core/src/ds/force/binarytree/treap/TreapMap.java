@@ -173,74 +173,13 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
     }
 
     @Override
-    protected AbstractEntry<K, V> successor(NavigableEntry<K, V> entry) {
-        return successor(entry.key,compare -> compare <= 0);
+    protected NavigableEntry<K, V> successor(NavigableEntry<K, V> entry) {
+        return getHigherEntry(entry.key);
     }
 
     @Override
-    protected AbstractEntry<K, V> predecessor(NavigableEntry<K, V> entry) {
-       return predecessor(entry.key,compare -> compare >= 0);
-    }
-
-    @SuppressWarnings("unchecked")
-    final AbstractEntry<K,V> successor(K key,IntPredicate predicate){
-        if (comparator != null) return successor(key, predicate,comparator::compare);
-        return successor(key,predicate,(k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
-    }
-
-    @SuppressWarnings("unchecked")
-    private AbstractEntry<K,V> successor(K key, IntPredicate predicate,ToIntBiFunction<K,K> compare){
-        AbstractEntry<K,V> entry = this.root;
-        AbstractEntry<K,V> target = null;
-        while (entry != null){
-            if (predicate.test(compare.applyAsInt(key,entry.key))){
-                entry = entry.left;
-            } else {
-                if (target == null ||
-                        compare.applyAsInt(target.key,entry.key) > 0) target = entry;
-                entry = entry.right;
-            }
-        }
-        return target;
-    }
-
-    @SuppressWarnings("unchecked")
-    final AbstractEntry<K,V> predecessor(K key,IntPredicate predicate){
-        if (comparator != null) return predecessorUsingComparator(key, predicate);
-        return predecessorComparable(key,predicate);
-    }
-
-    @SuppressWarnings("unchecked")
-    private AbstractEntry<K,V> predecessorComparable(K key, IntPredicate predicate){
-        AbstractEntry<K,V> entry = this.root;
-        Comparable<? super K> k = (Comparable<? super K>) key;
-        AbstractEntry<K,V> target = null;
-        while (entry != null){
-            if (predicate.test(k.compareTo(entry.key))){
-                entry = entry.right;
-            } else {
-                if (target == null ||
-                        ((Comparable<? super K>)target.key).compareTo(entry.key) < 0) target = entry;
-                entry = entry.left;
-            }
-        }
-        return target;
-    }
-
-    @SuppressWarnings("unchecked")
-    private AbstractEntry<K,V> predecessorUsingComparator(K key,IntPredicate predicate){
-        AbstractEntry<K,V> entry = this.root;
-        AbstractEntry<K,V> target = null;
-        while (entry != null){
-            if (predicate.test(comparator.compare(key, entry.key))){
-                entry = entry.right;
-            } else {
-                if (target == null ||
-                        ((Comparable<? super K>)target.key).compareTo(entry.key) < 0) target = entry;
-                entry = entry.left;
-            }
-        }
-        return target;
+    protected NavigableEntry<K, V> predecessor(NavigableEntry<K, V> entry) {
+        return getLowerEntry(entry.key);
     }
 
     /**
@@ -454,9 +393,10 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
                 entry = entry.left;
             }
             else if (cmp > 0){
-                entry = entry.right;
                 sequence = sequence + sizeOf(entry.left)+1;
+                entry = entry.right;
             } else {
+                sequence = sequence + sizeOf(entry.left);
                 break;
             }
         }
