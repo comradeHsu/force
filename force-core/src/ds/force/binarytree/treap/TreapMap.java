@@ -1,47 +1,164 @@
-package ds.force.treap;
+package ds.force.binarytree.treap;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.SortedMap;
+import ds.force.binarytree.SplayTreeMap;
+
+import java.util.*;
 import java.util.function.IntPredicate;
+import java.util.function.ToIntBiFunction;
 
-public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap<K,V> {
-
-    /**
-     * The comparator used to maintain order in this tree map, or
-     * null if it uses the natural ordering of its keys.
-     *
-     * @serial
-     */
-    private final Comparator<? super K> comparator;
+public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
 
     transient Random random;
 
     transient Entry<K,V> root;
 
     public TreapMap(){
-        this.comparator = null;
+        super();
         this.random = new Random();
     }
 
     public TreapMap(Comparator<? super K> comparator) {
-        this.comparator = comparator;
+        super(comparator);
         this.random = new Random();
     }
 
     @Override
+    protected NavigableEntry<K, V> getCeilingEntry(K key) {
+        AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (p != null) {
+            int cmp = compare.applyAsInt(key, p.key);
+            if (cmp < 0) {
+                if (p.left != null)
+                    p = p.left;
+                else
+                    return p;
+            } else if (cmp > 0) {
+                if (p.right != null) {
+                    p = p.right;
+                } else {
+                    Entry<K,V> parent = ((Entry<K,V>)p).parent;
+                    AbstractEntry<K,V> ch = p;
+                    while (parent != null && ch == parent.right) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            } else
+                return p;
+        }
+        return null;
+    }
+
+    @Override
+    protected NavigableEntry<K, V> getFloorEntry(K key) {
+        AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (p != null) {
+            int cmp = compare.applyAsInt(key, p.key);
+            if (cmp > 0) {
+                if (p.right != null)
+                    p = p.right;
+                else
+                    return p;
+            } else if (cmp < 0) {
+                if (p.left != null) {
+                    p = p.left;
+                } else {
+                    Entry<K,V> parent = ((Entry<K,V>)p).parent;
+                    AbstractEntry<K,V> ch = p;
+                    while (parent != null && ch == parent.left) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            } else
+                return p;
+
+        }
+        return null;
+    }
+
+    @Override
+    protected NavigableEntry<K, V> getHigherEntry(K key) {
+        AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (p != null) {
+            int cmp = compare.applyAsInt(key, p.key);
+            if (cmp < 0) {
+                if (p.left != null)
+                    p = p.left;
+                else
+                    return p;
+            } else {
+                if (p.right != null) {
+                    p = p.right;
+                } else {
+                    Entry<K,V> parent = ((Entry<K,V>)p).parent;
+                    AbstractEntry<K,V> ch = p;
+                    while (parent != null && ch == parent.right) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected NavigableEntry<K, V> getLowerEntry(K key) {
+        AbstractEntry<K,V> p = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (p != null) {
+            int cmp = compare.applyAsInt(key, p.key);
+            if (cmp > 0) {
+                if (p.right != null)
+                    p = p.right;
+                else
+                    return p;
+            } else {
+                if (p.left != null) {
+                    p = p.left;
+                } else {
+                    Entry<K,V> parent = ((Entry<K,V>)p).parent;
+                    AbstractEntry<K,V> ch = p;
+                    while (parent != null && ch == parent.left) {
+                        ch = parent;
+                        parent = parent.parent;
+                    }
+                    return parent;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     public int size() {
-        return 0;
+        return root == null ? 0 : root.size;
     }
 
     @Override
     public boolean isEmpty() {
         return this.root == null;
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        Entry<K,V> entry = getEntry(key);
+        return entry != null;
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        for (Map.Entry<K,V> e : entrySet())
+            if (valEquals(value, e.getValue()))
+                return true;
+        return false;
     }
 
     @Override
@@ -56,48 +173,31 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     }
 
     @Override
-    protected AbstractEntry<K, V> successor(AbstractEntry<K, V> entry) {
+    protected AbstractEntry<K, V> successor(NavigableEntry<K, V> entry) {
         return successor(entry.key,compare -> compare <= 0);
     }
 
     @Override
-    protected AbstractEntry<K, V> predecessor(AbstractEntry<K, V> entry) {
+    protected AbstractEntry<K, V> predecessor(NavigableEntry<K, V> entry) {
        return predecessor(entry.key,compare -> compare >= 0);
     }
 
     @SuppressWarnings("unchecked")
     final AbstractEntry<K,V> successor(K key,IntPredicate predicate){
-        if (comparator != null) return successorUsingComparator(key, predicate);
-        return successorComparable(key,predicate);
+        if (comparator != null) return successor(key, predicate,comparator::compare);
+        return successor(key,predicate,(k, k2) -> ((Comparable<? super K>)k).compareTo(k2));
     }
 
     @SuppressWarnings("unchecked")
-    private AbstractEntry<K,V> successorComparable(K key, IntPredicate predicate){
-        AbstractEntry<K,V> entry = this.root;
-        Comparable<? super K> k = (Comparable<? super K>) key;
-        AbstractEntry<K,V> target = null;
-        while (entry != null){
-            if (predicate.test(k.compareTo(entry.key))){
-                entry = entry.left;
-            } else {
-                if (target == null ||
-                        ((Comparable<? super K>)target.key).compareTo(entry.key) > 0) target = entry;
-                entry = entry.right;
-            }
-        }
-        return target;
-    }
-
-    @SuppressWarnings("unchecked")
-    private AbstractEntry<K,V> successorUsingComparator(K key, IntPredicate predicate){
+    private AbstractEntry<K,V> successor(K key, IntPredicate predicate,ToIntBiFunction<K,K> compare){
         AbstractEntry<K,V> entry = this.root;
         AbstractEntry<K,V> target = null;
         while (entry != null){
-            if (predicate.test(comparator.compare(key, entry.key))){
+            if (predicate.test(compare.applyAsInt(key,entry.key))){
                 entry = entry.left;
             } else {
                 if (target == null ||
-                        comparator.compare(target.key,entry.key) > 0) target = entry;
+                        compare.applyAsInt(target.key,entry.key) > 0) target = entry;
                 entry = entry.right;
             }
         }
@@ -150,16 +250,15 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
      */
     @Override
     protected Entry<K,V> getEntry(Object key){
-        if (comparator != null)
-            return getEntryUsingComparator(key);
         if (key == null)
             throw new NullPointerException();
         Entry<K,V> node = root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
         @SuppressWarnings("unchecked")
-        Comparable<? super K> k = (Comparable<? super K>) key;
+        K k = (K) key;
         int cmp;
         do {
-            cmp = k.compareTo(node.key);
+            cmp = compare.applyAsInt(k,node.key);
             if (cmp > 0){
                 node = (Entry<K, V>) node.right;
             } else if (cmp < 0){
@@ -168,25 +267,6 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
                 return node;
             }
         } while (node != null);
-        return null;
-    }
-
-    private Entry<K,V> getEntryUsingComparator(Object key){
-        @SuppressWarnings("unchecked")
-        K k = (K) key;
-        Comparator<? super K> cpr = comparator;
-        if (cpr != null) {
-            Entry<K,V> p = root;
-            while (p != null) {
-                int cmp = cpr.compare(k, p.key);
-                if (cmp < 0)
-                    p = (Entry<K, V>) p.left;
-                else if (cmp > 0)
-                    p = (Entry<K, V>) p.right;
-                else
-                    return p;
-            }
-        }
         return null;
     }
 
@@ -235,6 +315,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
         else
             parent.right = e;
         shiftUp(e);
+        updateSizeForTree(parent);
         return null;
     }
 
@@ -252,6 +333,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
             }
         }
         if (node.left == null && node.right == null){
+            Entry<K,V> parent = node.parent;
             if (node == root){
                 root = null;
             } else if (node == node.parent.left){
@@ -259,6 +341,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
             } else {
                 node.parent.right = node.parent =null;
             }
+            updateSizeForTree(parent);
             return node.getValue();
         }
         Entry<K,V> swap = (Entry<K, V>) (node.left == null ? node.right : node.left);
@@ -271,6 +354,7 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
             node.parent.right = swap;
         }
         node.left = node.right = node.parent = null;
+        updateSizeForTree(swap.parent);
         return node.getValue();
     }
 
@@ -303,6 +387,8 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
                 p.parent.right = r;
             r.left = p;
             p.parent = r;
+            updateSize(p);
+            updateSize(r);
         }
     }
 
@@ -320,10 +406,75 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
             else p.parent.left = l;
             l.right = p;
             p.parent = l;
+            updateSize(p);
+            updateSize(l);
         }
     }
 
     public TreapMap<K,V> split(K key){
+        Entry<K,V> newNode = null, splitPoint = null;
+        Entry<K,V> node = this.root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        Deque<Entry<K,V>> stack = new ArrayDeque<>();
+        while (node != null){
+            stack.push(node);
+            if (compare.applyAsInt(node.key,key) <= 0){
+                node = (Entry<K, V>) node.right;
+            } else {
+                node = (Entry<K, V>) node.left;
+            }
+        }
+        while (!stack.isEmpty()){
+            Entry<K,V> current = stack.pop();
+            if (compare.applyAsInt(current.key,key) <= 0){
+                current.right = splitPoint;
+                splitPoint = current;
+            } else {
+                current.left = newNode;
+                newNode = current;
+            }
+            updateSize(current);
+        }
+        TreapMap<K,V> result = new TreapMap<>();
+        if (newNode == root) {
+            result.root = splitPoint;
+        } else {
+            result.root = newNode;
+        }
+        return result;
+    }
+
+    public int getSequence(K key){
+        int sequence = 0;
+        AbstractEntry<K,V> entry = this.root;
+        ToIntBiFunction<K,K> compare = toIntBiFunction();
+        while (entry != null){
+            int cmp = compare.applyAsInt(key,entry.key);
+            if (cmp < 0){
+                entry = entry.left;
+            }
+            else if (cmp > 0){
+                entry = entry.right;
+                sequence = sequence + sizeOf(entry.left)+1;
+            } else {
+                break;
+            }
+        }
+        return sequence;
+    }
+
+    public V get(int ranking){
+        AbstractEntry<K,V> node = this.root;
+        while (node != null){
+            if (ranking == sizeOf(node.left) + 1) {
+                return node.value;
+            } else if (ranking <= sizeOf(node.left)) {
+                node = node.left;
+            } else {
+                ranking -= sizeOf(node.left) + 1;
+                node = node.right;
+            }
+        }
         return null;
     }
 
@@ -338,15 +489,11 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
      * there's no reason to create more than one.
      */
     private transient EntrySet entrySet;
-    private transient KeySet<K> navigableKeySet;
-    private transient NavigableMap<K,V> descendingMap;
 
     @Override
     public Set<K> keySet() {
         return navigableKeySet();
     }
-
-    transient Collection<V> values;
 
     @Override
     public Collection<V> values() {
@@ -359,53 +506,10 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<Map.Entry<K, V>> entrySet() {
         EntrySet es = entrySet;
         return (es != null) ? es : (entrySet = new EntrySet());
-    }
-
-    @Override
-    public AbstractEntry<K, V> lowerEntry(K key) {
-        return predecessor(key,compare -> compare >= 0);
-    }
-
-    @Override
-    public K lowerKey(K key) {
-        AbstractEntry<K,V> entry = lowerEntry(key);
-        return entry == null ? null : entry.key;
-    }
-
-    @Override
-    public AbstractEntry<K, V> floorEntry(K key) {
-        return predecessor(key,compare -> compare > 0);
-    }
-
-    @Override
-    public K floorKey(K key) {
-        AbstractEntry<K,V> entry = floorEntry(key);
-        return entry == null ? null : entry.key;
-    }
-
-    @Override
-    public AbstractEntry<K, V> ceilingEntry(K key) {
-        return successor(key,compare -> compare < 0);
-    }
-
-    @Override
-    public K ceilingKey(K key) {
-        AbstractEntry<K,V> entry = ceilingEntry(key);
-        return entry == null ? null : entry.key;
-    }
-
-    @Override
-    public AbstractEntry<K, V> higherEntry(K key) {
-        return successor(key,compare -> compare <= 0);
-    }
-
-    @Override
-    public K higherKey(K key) {
-        AbstractEntry<K,V> entry = higherEntry(key);
-        return entry == null ? null : entry.key;
     }
 
     @Override
@@ -416,70 +520,6 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
     @Override
     public AbstractEntry<K, V> lastEntry() {
         return getLastEntry();
-    }
-
-    @Override
-    public AbstractEntry<K, V> pollFirstEntry() {
-        AbstractEntry<K,V> entry = getFirstEntry();
-        remove(entry.key);
-        return entry;
-    }
-
-    @Override
-    public AbstractEntry<K, V> pollLastEntry() {
-        AbstractEntry<K,V> entry = getLastEntry();
-        remove(entry.key);
-        return entry;
-    }
-
-    @Override
-    public NavigableMap<K, V> descendingMap() {
-        return null;
-    }
-
-    @Override
-    public NavigableSet<K> navigableKeySet() {
-        return null;
-    }
-
-    @Override
-    public NavigableSet<K> descendingKeySet() {
-        return null;
-    }
-
-    @Override
-    public NavigableMap<K, V> subMap(K fromKey, boolean fromInclusive, K toKey, boolean toInclusive) {
-        return null;
-    }
-
-    @Override
-    public NavigableMap<K, V> headMap(K toKey, boolean inclusive) {
-        return null;
-    }
-
-    @Override
-    public NavigableMap<K, V> tailMap(K fromKey, boolean inclusive) {
-        return null;
-    }
-
-    @Override
-    public Comparator<? super K> comparator() {
-        return null;
-    }
-
-    @Override
-    public SortedMap<K, V> subMap(K fromKey, K toKey) {
-        return null;
-    }
-
-    @Override
-    public SortedMap<K, V> headMap(K toKey) {
-        return null;
-    }
-
-    @Override
-    public SortedMap<K, V> tailMap(K fromKey) {
-        return null;
     }
 
     @Override
@@ -496,15 +536,34 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> implements NavigableMap
 
     private static class Entry<K,V> extends AbstractTreapMap.AbstractEntry<K,V> {
 
+        int size;
+
         Entry<K,V> parent;
 
         Entry(K key, V value, int priority){
             super(key, value, priority);
+            this.size = 1;
         }
 
         Entry(K key, V value, int priority,Entry<K,V> parent){
             super(key, value, priority);
             this.parent = parent;
+            this.size = 1;
         }
+    }
+
+    private void updateSize(Entry<K,V> entry){
+        entry.size = sizeOf(entry.left)+sizeOf(entry.right)+1;
+    }
+
+    private void updateSizeForTree(Entry<K,V> entry){
+        while (entry != null) {
+            entry.size = sizeOf(entry.left) + sizeOf(entry.right) + 1;
+            entry = entry.parent;
+        }
+    }
+
+    static final <K,V> int sizeOf(AbstractEntry<K,V> entry){
+        return entry == null ? 0 : ((Entry<K,V>)entry).size;
     }
 }

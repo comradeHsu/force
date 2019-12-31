@@ -520,4 +520,16 @@ public class IntArrayList implements Cloneable, Serializable {
     public IntStream parallelStream() {
         return StreamSupport.intStream(spliterator(),true);
     }
+
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < size; i++) {
+            sb.append(elementData[i]).append(",");
+        }
+        if (!this.isEmpty()) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.append(']').toString();
+    }
 }

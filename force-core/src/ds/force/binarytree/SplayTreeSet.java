@@ -1,7 +1,6 @@
-package ds.force.treap;
+package ds.force.binarytree;
 
 import java.util.AbstractSet;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -9,7 +8,7 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.SortedSet;
 
-public abstract class AbstractTreapSet<E> extends AbstractSet<E> implements NavigableSet<E> {
+public class SplayTreeSet<E> extends AbstractSet<E> implements NavigableSet<E> {
 
     /**
      * The backing map.
@@ -19,6 +18,20 @@ public abstract class AbstractTreapSet<E> extends AbstractSet<E> implements Navi
     // Dummy value to associate with an Object in the backing Map
     protected static final Object PRESENT = new Object();
 
+    /**
+     * Constructs a set backed by the specified navigable map.
+     */
+    SplayTreeSet(NavigableMap<E,Object> m) {
+        this.m = m;
+    }
+
+    public SplayTreeSet() {
+        this(new SplayTreeMap<>());
+    }
+
+    public SplayTreeSet(Comparator<? super E> comparator) {
+        this(new SplayTreeMap<>(comparator));
+    }
 
     @Override
     public E lower(E e) {
@@ -53,43 +66,8 @@ public abstract class AbstractTreapSet<E> extends AbstractSet<E> implements Navi
     }
 
     @Override
-    public int size() {
-        return m.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return m.isEmpty();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return m.containsKey(o);
-    }
-
-    @Override
     public Iterator<E> iterator() {
         return m.navigableKeySet().iterator();
-    }
-
-    @Override
-    public boolean add(E e) {
-        return m.put(e,PRESENT) == null;
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        return m.remove(o)==PRESENT;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends E> c) {
-        return super.addAll(c);
-    }
-
-    @Override
-    public void clear() {
-        m.clear();
     }
 
     @Override
@@ -104,18 +82,18 @@ public abstract class AbstractTreapSet<E> extends AbstractSet<E> implements Navi
 
     @Override
     public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
-        return new TreapSet<>(m.subMap(fromElement, fromInclusive,
+        return new SplayTreeSet<>(m.subMap(fromElement, fromInclusive,
                 toElement,   toInclusive));
     }
 
     @Override
     public NavigableSet<E> headSet(E toElement, boolean inclusive) {
-        return new TreapSet<>(m.headMap(toElement, inclusive));
+        return new SplayTreeSet<>(m.headMap(toElement, inclusive));
     }
 
     @Override
     public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
-        return new TreapSet<>(m.tailMap(fromElement, inclusive));
+        return new SplayTreeSet<>(m.tailMap(fromElement, inclusive));
     }
 
     @Override
@@ -146,5 +124,10 @@ public abstract class AbstractTreapSet<E> extends AbstractSet<E> implements Navi
     @Override
     public E last() {
         return m.lastKey();
+    }
+
+    @Override
+    public int size() {
+        return m.size();
     }
 }
