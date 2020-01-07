@@ -274,10 +274,10 @@ public class BTreeMapTest extends TestCase {
         }
     }
 
-    public void testExtendFunc(){
-        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
-        assertEquals(Integer.valueOf(1),map.getOrDefault(5,1));
-    }
+//    public void testExtendFunc(){
+//        BTreeMap<Integer,Integer> map = new BTreeMap<>(2);
+//        assertEquals(Integer.valueOf(1),map.getOrDefault(5,1));
+//    }
 
     public void parentEq(BTreeMap map){
         Deque<BTreeMap.BTreeNode> stack = new ArrayDeque<>();
