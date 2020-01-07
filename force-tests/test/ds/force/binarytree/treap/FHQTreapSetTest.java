@@ -69,7 +69,7 @@ public class FHQTreapSetTest extends TestCase {
         }
     }
 
-    public void testFloorEntry(){
+    public void testFloor(){
         FHQTreapSet<Integer> set = new FHQTreapSet<>();
         assertNull(set.floor(2));
         IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
@@ -85,7 +85,7 @@ public class FHQTreapSetTest extends TestCase {
         assertEquals(Integer.valueOf(21),set.floor(21));
     }
 
-    public void testHigherEntry(){
+    public void testHigher(){
         FHQTreapSet<Integer> set = new FHQTreapSet<>();
         assertNull(set.higher(2));
         IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
@@ -101,37 +101,37 @@ public class FHQTreapSetTest extends TestCase {
         assertEquals(Integer.valueOf(27),set.higher(21));
     }
 
-    public void testCeilingEntry(){
-        NavigableSet<Integer> map = new FHQTreapSet<>();
-        assertNull(map.ceiling(2));
+    public void testCeiling(){
+        NavigableSet<Integer> set = new FHQTreapSet<>();
+        assertNull(set.ceiling(2));
         IntArrayList ints = IntArrayList.of(46,5,42,41,41,7,21,40,48,34,41,16,14,3,19,27,35,34,27,12,7,41,20,41,37);
         for (int i = 0; i < ints.size(); i++) {
-            map.add(ints.get(i));
+            set.add(ints.get(i));
         }
-        assertNull(map.ceiling(49));
-        assertEquals(Integer.valueOf(5),map.ceiling(5));
-        assertEquals(Integer.valueOf(14),map.ceiling(13));
-        assertEquals(Integer.valueOf(27),map.ceiling(27));
-        assertEquals(Integer.valueOf(34),map.ceiling(31));
-        assertEquals(Integer.valueOf(3),map.ceiling(3));
-        assertEquals(Integer.valueOf(21),map.ceiling(21));
-        assertEquals(Integer.valueOf(48),map.ceiling(48));
+        assertNull(set.ceiling(49));
+        assertEquals(Integer.valueOf(5),set.ceiling(5));
+        assertEquals(Integer.valueOf(14),set.ceiling(13));
+        assertEquals(Integer.valueOf(27),set.ceiling(27));
+        assertEquals(Integer.valueOf(34),set.ceiling(31));
+        assertEquals(Integer.valueOf(3),set.ceiling(3));
+        assertEquals(Integer.valueOf(21),set.ceiling(21));
+        assertEquals(Integer.valueOf(48),set.ceiling(48));
     }
 
-    public void testLowerEntry(){
-        NavigableSet<Integer> map = init();
-        assertEquals(null,map.lower(3));
-        assertEquals(Integer.valueOf(3),map.lower(5));
-        assertEquals(Integer.valueOf(12),map.lower(13));
-        assertEquals(Integer.valueOf(21),map.lower(27));
-        assertEquals(Integer.valueOf(27),map.lower(31));
-        assertEquals(Integer.valueOf(48),map.lower(188));
+    public void testLower(){
+        NavigableSet<Integer> set = init();
+        assertEquals(null,set.lower(3));
+        assertEquals(Integer.valueOf(3),set.lower(5));
+        assertEquals(Integer.valueOf(12),set.lower(13));
+        assertEquals(Integer.valueOf(21),set.lower(27));
+        assertEquals(Integer.valueOf(27),set.lower(31));
+        assertEquals(Integer.valueOf(48),set.lower(188));
     }
 
-    public void testBatchEntry(){
-        NavigableSet<Integer> map = new FHQTreapSet<>();
+    public void testBatch(){
+        NavigableSet<Integer> set = new FHQTreapSet<>();
         for (int i = 0; i < 50; i++) {
-            map.add(i*2);
+            set.add(i*2);
         }
         Random random = new Random();
         for (int i = 0; i < 1000; i++) {
@@ -140,15 +140,15 @@ public class FHQTreapSetTest extends TestCase {
             if (key < 0) System.out.println(key);
             try {
                 if ((key & 1) == 1) {
-                    assertEquals(Integer.valueOf(key + 1), map.ceiling(key));
-                    assertEquals(Integer.valueOf(key + 1), map.higher(key));
-                    assertEquals(Integer.valueOf(key - 1), map.lower(key));
-                    assertEquals(Integer.valueOf(key - 1), map.floor(key));
+                    assertEquals(Integer.valueOf(key + 1), set.ceiling(key));
+                    assertEquals(Integer.valueOf(key + 1), set.higher(key));
+                    assertEquals(Integer.valueOf(key - 1), set.lower(key));
+                    assertEquals(Integer.valueOf(key - 1), set.floor(key));
                 } else {
-                    assertEquals(key, map.ceiling(key));
-                    assertEquals(Integer.valueOf(key + 2), map.higher(key));
-                    assertEquals(Integer.valueOf(key - 2), map.lower(key));
-                    assertEquals(key, map.floor(key));
+                    assertEquals(key, set.ceiling(key));
+                    assertEquals(Integer.valueOf(key + 2), set.higher(key));
+                    assertEquals(Integer.valueOf(key - 2), set.lower(key));
+                    assertEquals(key, set.floor(key));
                 }
             }catch (NullPointerException e){
                 e.printStackTrace();
@@ -157,9 +157,9 @@ public class FHQTreapSetTest extends TestCase {
         }
     }
 
-    public void testDescendingMap(){
-        NavigableSet<Integer> map = init();
-        NavigableSet<Integer> des = map.descendingSet();
+    public void testDescendingSet(){
+        NavigableSet<Integer> set = init();
+        NavigableSet<Integer> des = set.descendingSet();
         Iterator<Integer> iterable = des.iterator();
         while (iterable.hasNext()){
             Integer entry = iterable.next();
@@ -176,24 +176,24 @@ public class FHQTreapSetTest extends TestCase {
     }
 
 //    public void testSplit(){
-//        FHQTreapSet<Integer> map = init();
-//        assertEquals(Integer.valueOf(3),map.first());
-//        FHQset<Integer,Integer> zero = map.split(3);
+//        FHQTreapSet<Integer> set = init();
+//        assertEquals(Integer.valueOf(3),set.first());
+//        FHQset<Integer,Integer> zero = set.split(3);
 //        assertEquals(1,zero.size());
 //        assertEquals(Integer.valueOf(3),zero.firstKey());
 //    }
 //
 //    public void testRanking(){
-//        FHQTreapSet<Integer> map = init();
-//        assertEquals(Integer.valueOf(5),map.get(2));
-//        assertEquals(Integer.valueOf(48),map.get(map.size()));
+//        FHQTreapSet<Integer> set = init();
+//        assertEquals(Integer.valueOf(5),set.get(2));
+//        assertEquals(Integer.valueOf(48),set.get(set.size()));
 //    }
 //
 //    public void testGetSequence(){
-//        FHQTreapSet<Integer> map = init();
-//        assertEquals(0,map.getSequence(3));
-//        assertEquals(17,map.getSequence(48));
-//        assertEquals(18,map.getSequence(49));
-//        assertEquals(0,map.getSequence(2));
+//        FHQTreapSet<Integer> set = init();
+//        assertEquals(0,set.getSequence(3));
+//        assertEquals(17,set.getSequence(48));
+//        assertEquals(18,set.getSequence(49));
+//        assertEquals(0,set.getSequence(2));
 //    }
 }
