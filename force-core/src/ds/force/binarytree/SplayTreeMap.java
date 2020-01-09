@@ -619,11 +619,11 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
         }
     }
 
-    public V get(int ranking){
+    Map.Entry<K,V> getEntry(int ranking){
         SplayEntry<K,V> node = this.root;
         while (node != null){
             if (ranking == sizeOf(node.left) + 1) {
-                return node.value;
+                return node;
             } else if (ranking <= sizeOf(node.left)) {
                 node = node.left;
             } else {
@@ -632,6 +632,11 @@ public class SplayTreeMap<K,V> extends AbstractNavigableMap<K,V> {
             }
         }
         return null;
+    }
+
+    public V get(int ranking){
+        Map.Entry<K,V> node = getEntry(ranking);
+        return node == null ? null : node.getValue();
     }
 
     public int getSequence(K key){

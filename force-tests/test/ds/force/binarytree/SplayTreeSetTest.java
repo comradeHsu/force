@@ -175,25 +175,25 @@ public class SplayTreeSetTest extends TestCase {
         }
     }
 
-//    public void testSplit(){
-//        SplayTreeSet<Integer> set = init();
-//        assertEquals(Integer.valueOf(3),set.first());
-//        SplayTreeSet<Integer> zero = set.split(3);
-//        assertEquals(1,zero.size());
-//        assertEquals(Integer.valueOf(3),zero.firstKey());
-//    }
-//
-//    public void testRanking(){
-//        SplayTreeSet<Integer> set = init();
-//        assertEquals(Integer.valueOf(5),set.get(2));
-//        assertEquals(Integer.valueOf(48),set.get(set.size()));
-//    }
-//
-//    public void testGetSequence(){
-//        SplayTreeSet<Integer> set = init();
-//        assertEquals(0,set.getSequence(3));
-//        assertEquals(17,set.getSequence(48));
-//        assertEquals(18,set.getSequence(49));
-//        assertEquals(0,set.getSequence(2));
-//    }
+    public void testSplit(){
+        SplayTreeSet<Integer> set = init();
+        assertEquals(Integer.valueOf(3),set.first());
+        SplayTreeSet<Integer> zero = set.split(3);
+        assertEquals(1,zero.size());
+        assertEquals(Integer.valueOf(3),zero.first());
+    }
+
+    public void testRanking(){
+        SplayTreeSet<Integer> set = init();
+        assertEquals(Integer.valueOf(5),set.get(2));
+        assertEquals(Integer.valueOf(48),set.get(set.size()));
+    }
+
+    public void testGetSequence(){
+        SplayTreeSet<Integer> set = init();
+        assertEquals(0,set.getSequence(3));
+        assertEquals(17,set.getSequence(48));
+        assertEquals(18,set.getSequence(49));
+        assertEquals(0,set.getSequence(2));
+    }
 }

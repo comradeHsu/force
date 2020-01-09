@@ -1,9 +1,12 @@
 package ds.force.binarytree.treap;
 
-import ds.force.binarytree.SplayTreeMap;
-
-import java.util.*;
-import java.util.function.IntPredicate;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.function.ToIntBiFunction;
 
 public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
@@ -403,11 +406,11 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
         return sequence;
     }
 
-    public V get(int ranking){
+    Map.Entry<K,V> getEntry(int ranking){
         AbstractEntry<K,V> node = this.root;
         while (node != null){
             if (ranking == sizeOf(node.left) + 1) {
-                return node.value;
+                return node;
             } else if (ranking <= sizeOf(node.left)) {
                 node = node.left;
             } else {
@@ -416,6 +419,11 @@ public class TreapMap<K,V> extends AbstractTreapMap<K,V> {
             }
         }
         return null;
+    }
+
+    public V get(int ranking){
+        Map.Entry<K,V> entry = getEntry(ranking);
+        return entry == null ? null : entry.getValue();
     }
 
     @Override
