@@ -295,11 +295,11 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
         return itemNode == null ? null : itemNode.value;
     }
 
-    public V get(int ranking){
+    Map.Entry<K,V> getEntry(int ranking){
         AbstractEntry<K,V> node = this.root;
         while (node != null){
             if (ranking == sizeOf(node.left) + 1) {
-                return node.value;
+                return node;
             } else if (ranking <= sizeOf(node.left)) {
                 node = node.left;
             } else {
@@ -308,6 +308,11 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
             }
         }
         return null;
+    }
+
+    public V get(int ranking){
+        Map.Entry<K,V> node = getEntry(ranking);
+        return node == null ? null : node.getValue();
     }
 
     public int getSequence(K key){
@@ -424,11 +429,6 @@ public class FHQTreapMap<K,V> extends AbstractTreapMap<K,V> implements Navigable
             this.size = 1;
         }
     }
-
-    private void deleteEntry(Entry<K,V> entry){
-        remove(entry.getKey());
-    }
-
 
     @Override
     public AbstractEntry<K,V> firstEntry() {

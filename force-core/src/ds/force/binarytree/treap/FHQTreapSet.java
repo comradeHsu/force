@@ -40,7 +40,7 @@ public class FHQTreapSet<E> extends AbstractTreapSet<E> {
     public int getSequence(E element){
         return ((FHQTreapMap<E,Object>)m).getSequence(element);
     }
-    //waiting impl
+
     public E get(int ranking){
         Map.Entry<E,Object> entry = ((FHQTreapMap<E,Object>)m).getEntry(ranking);
         return entry == null ? null : entry.getKey();

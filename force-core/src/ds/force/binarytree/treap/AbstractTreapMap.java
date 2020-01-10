@@ -76,23 +76,6 @@ public abstract class AbstractTreapMap<K,V> extends AbstractNavigableMap<K,V> {
             this.value = value;
             this.priority = priority;
         }
-
-        @Override
-        public K getKey() {
-            return key;
-        }
-
-        @Override
-        public V getValue() {
-            return value;
-        }
-
-        @Override
-        public V setValue(V value) {
-            V oldValue = this.value;
-            this.value = value;
-            return oldValue;
-        }
     }
 
     class Values extends AbstractCollection<V> {
